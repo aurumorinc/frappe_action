@@ -1,0 +1,3 @@
+[submodule "third_party/automa"]
+	path = third_party/automa
+	url = https://github.com/automaapp/automa
