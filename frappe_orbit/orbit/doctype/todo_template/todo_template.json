@@ -9,7 +9,8 @@
  "field_order": [
   "template_name",
   "instructions",
-  "action_type"
+  "action_type",
+  "action"
  ],
  "fields": [
   {
@@ -30,6 +31,13 @@
    "fieldtype": "Select",
    "label": "Action Type",
    "options": "Simple Approval\nData Entry Form\nExtension Trigger"
+  },
+  {
+   "depends_on": "eval:doc.action_type=='Extension Trigger'",
+   "fieldname": "action",
+   "fieldtype": "Link",
+   "label": "Action",
+   "options": "Action"
   }
  ],
  "grid_page_length": 50,
