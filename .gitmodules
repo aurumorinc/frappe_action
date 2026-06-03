@@ -1,3 +1,6 @@
 [submodule "third_party/automa"]
 	path = third_party/automa
 	url = https://github.com/automaapp/automa
+[submodule "packages/frappe_orbit/third_party/wxt"]
+	path = packages/frappe_orbit/third_party/wxt
+	url = https://github.com/wxt-dev/wxt
