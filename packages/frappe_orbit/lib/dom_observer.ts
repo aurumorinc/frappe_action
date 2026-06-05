@@ -19,6 +19,7 @@ export function domObserver(config: DomObserverConfig): Promise<Result<unknown>>
       const el = document.querySelector(config.target_selector);
       if (el) {
         obs.disconnect();
+        clearTimeout(timeoutId);
         const value = extractValue(el, config.extract_target);
         resolve({ success: true, value });
       }
@@ -29,6 +30,11 @@ export function domObserver(config: DomObserverConfig): Promise<Result<unknown>>
       subtree: true,
       attributes: true
     });
+
+    const timeoutId = setTimeout(() => {
+      observer.disconnect();
+      resolve({ success: false, error: new Error('Timeout waiting for element') });
+    }, 30000);
   });
 }
 

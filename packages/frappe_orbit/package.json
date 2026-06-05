@@ -1,31 +1,41 @@
 {
   "name": "frappe_orbit",
-  "version": "1.0.0",
-  "description": "",
+  "version": "16.0.1",
+  "description": "An intelligent browser co-pilot that seamlessly integrates with your Frappe and ERPNext instances to automate workflows and extract data.",
   "main": "index.js",
   "directories": {
     "lib": "lib"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "postinstall": "wxt prepare",
+    "test": "vitest run",
+    "test:e2e": "wxt build && xvfb-run playwright test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "plasmo": "^0.90.5",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "frappe-ui": "^0.1.278",
+    "lucide-vue-next": "^0.378.0",
+    "vue": "^3.4.21"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
+    "@testing-library/vue": "^8.0.3",
     "@types/chrome": "^0.1.42",
-    "@vitejs/plugin-react": "^6.0.2",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@wxt-dev/auto-icons": "^1.1.1",
+    "@wxt-dev/module-vue": "^1.0.0",
+    "autoprefixer": "^10.4.19",
+    "happy-dom": "^20.9.0",
     "jsdom": "^29.1.1",
-    "vitest": "^4.1.8"
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "vitest": "^4.1.8",
+    "wxt": "^0.20.26"
   }
 }

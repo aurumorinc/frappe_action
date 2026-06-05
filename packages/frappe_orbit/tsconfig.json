@@ -1,7 +1,12 @@
 {
+  "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
     "target": "es2022",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -12,12 +17,20 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
     "paths": {
-      "~*": ["./*"]
+      "~*": [
+        "./*"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".wxt/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

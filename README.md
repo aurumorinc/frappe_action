@@ -1,13 +1,15 @@
 # Frappe Orbit
 
-Frappe Orbit is a system designed to define, compile, and execute browser-based automation workflows (Actions). It consists of a Frappe backend app for defining workflows and a Plasmo-based browser extension for executing them.
+Frappe Orbit is a system designed to define, compile, and execute browser-based automation workflows (Actions). It consists of a Frappe backend app for defining workflows and a WXT-based browser extension for executing them.
+
+The primary purpose of the extension is to act as a "Human-in-the-Loop" (HITL) execution engine. It allows complex, multi-step workflows defined in the Frappe backend to be executed directly within the user's browser. This is particularly useful for tasks that require interacting with third-party websites, scraping data, intercepting network requests, or guiding a user through manual steps (like solving captchas) where a purely server-side bot would fail or be blocked.
 
 ## Architecture Overview
 
 The system is divided into two main components:
 
-1. **Frappe Backend App**: Manages the definition of workflows using a node-and-edge graph structure.
-2. **Plasmo Browser Extension**: Acts as the execution engine (bot/co-pilot) that runs these workflows directly in the user's browser, interacting with the DOM and network.
+1. **Frappe Backend App**: Manages the definition of workflows using a node-and-edge graph structure. It compiles these workflows into a JSON format that the extension can understand.
+2. **WXT Browser Extension**: Acts as the execution engine (bot/co-pilot) that runs these workflows directly in the user's browser, interacting with the DOM and network.
 
 ### Frappe Backend
 
@@ -19,7 +21,7 @@ The backend is responsible for storing and compiling the automation logic. It us
 
 ### Browser Extension
 
-Built using the **Plasmo** framework (React + TypeScript), the extension is the execution environment for the compiled JSON workflows.
+Built using the **WXT** framework (React + TypeScript + Vite), the extension is the execution environment for the compiled JSON workflows. It leverages modern web extension APIs (Manifest V3) and is designed to be cross-browser compatible.
 
 *   **The Engine**: Maintains the state of the running workflow (`scrapedData`) and tracks the current node. It evaluates edge conditions dynamically to determine the next node.
 *   **Background Script**: Acts as the orchestrator. It listens for a `START_ACTION` message, initializes the Engine, and routes tasks based on node types (e.g., calling network observers or sending messages to the content script for DOM observation).
@@ -61,7 +63,13 @@ To build the browser extension:
 ```bash
 cd apps/frappe_orbit/packages/frappe_orbit
 pnpm install
-pnpm build
+pnpm run build
+```
+
+To run the extension in development mode (with hot-reloading):
+
+```bash
+pnpm run dev
 ```
 
 ## Contributing
