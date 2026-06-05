@@ -1,4 +1,4 @@
-import { Result } from "./engine";
+import { Result } from "../services/engine";
 
 export interface DomObserverConfig {
   target_selector: string;

@@ -19,6 +19,7 @@ declare global {
   const defineContentScript: typeof import('wxt/utils/define-content-script').defineContentScript
   const defineUnlistedScript: typeof import('wxt/utils/define-unlisted-script').defineUnlistedScript
   const defineWxtPlugin: typeof import('wxt/utils/define-wxt-plugin').defineWxtPlugin
+  const domObserver: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/dom_observer').domObserver
   const effectScope: typeof import('vue').effectScope
   const fakeBrowser: typeof import('wxt/testing').fakeBrowser
   const getAppConfig: typeof import('wxt/utils/app-config').getAppConfig
@@ -34,6 +35,7 @@ declare global {
   const isRef: typeof import('vue').isRef
   const isShallow: typeof import('vue').isShallow
   const markRaw: typeof import('vue').markRaw
+  const networkObserver: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/network_observer').networkObserver
   const nextTick: typeof import('vue').nextTick
   const onActivated: typeof import('vue').onActivated
   const onBeforeMount: typeof import('vue').onBeforeMount
@@ -72,6 +74,7 @@ declare global {
   const useModel: typeof import('vue').useModel
   const useSlots: typeof import('vue').useSlots
   const useTemplateRef: typeof import('vue').useTemplateRef
+  const useTodos: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/composables/useTodos').useTodos
   const watch: typeof import('vue').watch
   const watchEffect: typeof import('vue').watchEffect
   const watchPostEffect: typeof import('vue').watchPostEffect
@@ -109,6 +112,12 @@ declare global {
   // @ts-ignore
   export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
+  // @ts-ignore
+  export type { DomObserverConfig } from '/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/dom_observer'
+  import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/dom_observer')
+  // @ts-ignore
+  export type { NetworkObserverConfig } from '/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/network_observer'
+  import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/network_observer')
 }
 // for vue template auto import
 import { UnwrapRef } from 'vue'
@@ -132,6 +141,7 @@ declare module 'vue' {
     readonly defineContentScript: UnwrapRef<typeof import('wxt/utils/define-content-script')['defineContentScript']>
     readonly defineUnlistedScript: UnwrapRef<typeof import('wxt/utils/define-unlisted-script')['defineUnlistedScript']>
     readonly defineWxtPlugin: UnwrapRef<typeof import('wxt/utils/define-wxt-plugin')['defineWxtPlugin']>
+    readonly domObserver: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/dom_observer')['domObserver']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly fakeBrowser: UnwrapRef<typeof import('wxt/testing')['fakeBrowser']>
     readonly getAppConfig: UnwrapRef<typeof import('wxt/utils/app-config')['getAppConfig']>
@@ -147,6 +157,7 @@ declare module 'vue' {
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly isShallow: UnwrapRef<typeof import('vue')['isShallow']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
+    readonly networkObserver: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/network_observer')['networkObserver']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
     readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
     readonly onBeforeMount: UnwrapRef<typeof import('vue')['onBeforeMount']>
@@ -185,6 +196,7 @@ declare module 'vue' {
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
+    readonly useTodos: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/composables/useTodos')['useTodos']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
     readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>

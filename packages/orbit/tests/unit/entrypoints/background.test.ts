@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
-import * as authStorage from '../../../lib/auth_storage';
+import * as authStorage from '../../../src/services/auth';
 
 // Mock the background script dependencies
-vi.mock('../../../lib/engine', () => {
+vi.mock('../../../src/services/engine', () => {
   return {
     Engine: class {
       getCurrentNode = vi.fn().mockReturnValue(null);
@@ -13,7 +13,7 @@ vi.mock('../../../lib/engine', () => {
   };
 });
 
-vi.mock('../../../lib/auth_storage', () => ({
+vi.mock('../../../src/services/auth', () => ({
   saveSite: vi.fn(),
   getActiveSite: vi.fn()
 }));

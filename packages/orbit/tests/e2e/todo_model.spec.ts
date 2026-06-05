@@ -33,6 +33,8 @@ test.describe('Todo Model E2E', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ data: [] })
       });
     });
@@ -42,6 +44,8 @@ test.describe('Todo Model E2E', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ message: { compiled_json: '{"nodes":[],"edges":[]}' } })
       });
     });
@@ -64,11 +68,11 @@ test.describe('Todo Model E2E', () => {
     await expect(shadowHost).toBeAttached();
 
     // Check base layout
-    const todoContainer = shadowHost.locator('.fixed.z-50.right-0');
+    const todoContainer = shadowHost.locator('.todo-modal');
     await expect(todoContainer).toBeVisible();
     
     // Check heading
-    await expect(shadowHost.locator('text=Getting started')).toBeVisible();
+    await expect(shadowHost.locator('.todo-title').filter({ hasText: 'Todos' })).toBeVisible();
   });
 
   test('Content and Limits', async ({ page, context }) => {
@@ -84,6 +88,8 @@ test.describe('Todo Model E2E', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ data: mockTodos })
       });
     });
@@ -92,6 +98,8 @@ test.describe('Todo Model E2E', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ message: { compiled_json: '{"nodes":[],"edges":[]}' } })
       });
     });
@@ -115,7 +123,7 @@ test.describe('Todo Model E2E', () => {
     await expect(shadowHost.locator('text=0/15 todos completed')).toBeVisible();
 
     // Verify only 9 items are rendered
-    const todoItems = shadowHost.locator('.group.w-full.flex.gap-2');
+    const todoItems = shadowHost.locator('.todo-item.group');
     await expect(todoItems).toHaveCount(9);
   });
 
@@ -123,13 +131,15 @@ test.describe('Todo Model E2E', () => {
     // Mock todos with dependencies (nested action nodes)
     const mockTodos = [
       { name: 'TODO-1', description: 'Parent Todo', status: 'Open', action: 'Test Action' },
-      { name: 'TODO-2', description: 'Child Todo', status: 'Open', dependsOn: 'TODO-1', action: 'Test Action' }
+      { name: 'TODO-2', description: 'Child Todo', status: 'Open', depends_on: 'TODO-1', action: 'Test Action' }
     ];
 
     await page.route('**/api/resource/ToDo*', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ data: mockTodos })
       });
     });
@@ -138,6 +148,8 @@ test.describe('Todo Model E2E', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ message: { compiled_json: '{"nodes":[],"edges":[]}' } })
       });
     });
@@ -158,7 +170,7 @@ test.describe('Todo Model E2E', () => {
     await expect(shadowHost).toBeAttached();
 
     // Verify both are rendered
-    const todoItems = shadowHost.locator('.group.w-full.flex.gap-2');
+    const todoItems = shadowHost.locator('.todo-item.group');
     await expect(todoItems).toHaveCount(2);
 
     // Verify the child has the dependent styling (text-ink-gray-4)
@@ -174,17 +186,30 @@ test.describe('Todo Model E2E', () => {
     ];
 
     await page.route('**/api/resource/ToDo*', async (route) => {
-      if (route.request().method() === 'PUT') {
+      if (route.request().method() === 'OPTIONS') {
+        await route.fulfill({
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': '*'
+          }
+        });
+      } else if (route.request().method() === 'PUT') {
         // Mock the PUT request for updating status
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
           body: JSON.stringify({ data: { name: 'TODO-1', status: 'Closed' } })
         });
       } else {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
           body: JSON.stringify({ data: mockTodos })
         });
       }
@@ -194,6 +219,8 @@ test.describe('Todo Model E2E', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ message: { compiled_json: '{"nodes":[],"edges":[]}' } })
       });
     });
@@ -217,11 +244,11 @@ test.describe('Todo Model E2E', () => {
     await expect(shadowHost.locator('text=0/2 todos completed')).toBeVisible();
 
     // Hover over the first item to reveal the "Mark Completed" button
-    const firstItem = shadowHost.locator('.group.w-full.flex.gap-2').first();
+    const firstItem = shadowHost.locator('.todo-item.group').first();
     await firstItem.hover();
 
     // Click "Mark Completed" on the first item
-    const markCompletedBtn = firstItem.locator('button:has-text("Mark Completed")');
+    const markCompletedBtn = firstItem.locator('button:has-text("Skip")');
     await markCompletedBtn.click({ force: true });
 
     // Verify progress updated
@@ -239,16 +266,29 @@ test.describe('Todo Model E2E', () => {
     ];
 
     await page.route('**/api/resource/ToDo*', async (route) => {
-      if (route.request().method() === 'PUT') {
+      if (route.request().method() === 'OPTIONS') {
+        await route.fulfill({
+          status: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': '*'
+          }
+        });
+      } else if (route.request().method() === 'PUT') {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
           body: JSON.stringify({ data: { status: 'Closed' } })
         });
       } else {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
           body: JSON.stringify({ data: mockTodos })
         });
       }
@@ -258,6 +298,8 @@ test.describe('Todo Model E2E', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: { 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ message: { compiled_json: '{"nodes":[],"edges":[]}' } })
       });
     });
@@ -281,7 +323,7 @@ test.describe('Todo Model E2E', () => {
     await expect(shadowHost.locator('text=0/2 todos completed')).toBeVisible();
 
     // Click the global "Mark Completed" button
-    const globalMarkCompletedBtn = shadowHost.locator('button:has-text("Mark Completed")').first();
+    const globalMarkCompletedBtn = shadowHost.locator('button:has-text("Mark completed")').first();
     await expect(globalMarkCompletedBtn).toBeVisible();
     await globalMarkCompletedBtn.click();
 

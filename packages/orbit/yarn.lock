@@ -223,12 +223,19 @@
   dependencies:
     "@tanstack/vue-virtual" "^3.0.0-beta.60"
 
-"@iconify/types@^2.0.0":
+"@iconify-json/lucide@^1.2.111":
+  version "1.2.111"
+  resolved "https://registry.npmjs.org/@iconify-json/lucide/-/lucide-1.2.111.tgz"
+  integrity sha512-S6oXom2YOKuXFxWofhHa2oq++Z3WeZ78dRFDA7aEEJqyNCJlQd1UGAfN8u2gD2NzvYotmm+j5kH678viWfZbGQ==
+  dependencies:
+    "@iconify/types" "*"
+
+"@iconify/types@*", "@iconify/types@^2.0.0":
   version "2.0.0"
   resolved "https://registry.npmjs.org/@iconify/types/-/types-2.0.0.tgz"
   integrity sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==
 
-"@iconify/utils@^3.0.2":
+"@iconify/utils@^3.0.2", "@iconify/utils@^3.1.0":
   version "3.1.3"
   resolved "https://registry.npmjs.org/@iconify/utils/-/utils-3.1.3.tgz"
   integrity sha512-LPKOXPn/zV+zis1oOfGWogaXVpqUybF3ZS6SCZIsz8vg0ivVp9+fVqyYB7xq0aiST/VhUQYGO1qo6uoYSiEJqw==
@@ -963,7 +970,7 @@
     "@vue/compiler-core" "3.5.35"
     "@vue/shared" "3.5.35"
 
-"@vue/compiler-sfc@^3.0.2 || ^2.7.0", "@vue/compiler-sfc@>= 3", "@vue/compiler-sfc@3.5.35":
+"@vue/compiler-sfc@^3.0.2", "@vue/compiler-sfc@^3.0.2 || ^2.7.0", "@vue/compiler-sfc@>= 3", "@vue/compiler-sfc@3.5.35":
   version "3.5.35"
   resolved "https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.35.tgz"
   integrity sha512-G5VPMcXTSywXBgtFOZOnHKBxKSrwXUcvY1iaF5/hRcy7t0J6CH/d8ha9F4nzi00Fax1eLV0QHM7v4mQu68jydw==
@@ -4992,6 +4999,17 @@ unplugin-icons@^22.1.0:
     local-pkg "^1.1.2"
     unplugin "^2.3.10"
 
+unplugin-icons@^23.0.1:
+  version "23.0.1"
+  resolved "https://registry.npmjs.org/unplugin-icons/-/unplugin-icons-23.0.1.tgz"
+  integrity sha512-rv0XEJepajKzDLvRUWASM8K+8+/CCfZn2jtogXqg6RIp7kpatRc/aFrVJn8ANQA09e++lPEEv9yX8cC9enc+QQ==
+  dependencies:
+    "@antfu/install-pkg" "^1.1.0"
+    "@iconify/utils" "^3.1.0"
+    local-pkg "^1.1.2"
+    obug "^2.1.1"
+    unplugin "^2.3.11"
+
 unplugin-utils@^0.2.4:
   version "0.2.5"
   resolved "https://registry.npmjs.org/unplugin-utils/-/unplugin-utils-0.2.5.tgz"
@@ -5033,6 +5051,16 @@ unplugin@^2.2.2, unplugin@^2.3.4:
     webpack-virtual-modules "^0.6.2"
 
 unplugin@^2.3.10:
+  version "2.3.11"
+  resolved "https://registry.npmjs.org/unplugin/-/unplugin-2.3.11.tgz"
+  integrity sha512-5uKD0nqiYVzlmCRs01Fhs2BdkEgBS3SAVP6ndrBsuK42iC2+JHyxM05Rm9G8+5mkmRtzMZGY8Ct5+mliZxU/Ww==
+  dependencies:
+    "@jridgewell/remapping" "^2.3.5"
+    acorn "^8.15.0"
+    picomatch "^4.0.3"
+    webpack-virtual-modules "^0.6.2"
+
+unplugin@^2.3.11:
   version "2.3.11"
   resolved "https://registry.npmjs.org/unplugin/-/unplugin-2.3.11.tgz"
   integrity sha512-5uKD0nqiYVzlmCRs01Fhs2BdkEgBS3SAVP6ndrBsuK42iC2+JHyxM05Rm9G8+5mkmRtzMZGY8Ct5+mliZxU/Ww==

@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
-import * as domObserverModule from '../../lib/dom_observer';
+import * as domObserverModule from '../../src/utils/dom_observer';
 
-vi.mock('../../lib/dom_observer', () => ({
+vi.mock('../../src/utils/dom_observer', () => ({
   domObserver: vi.fn()
 }));
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Engine, ActionGraph } from '../../../lib/engine';
+import { Engine, ActionGraph } from '../../../src/services/engine';
 
 describe('Engine', () => {
   it('should traverse linear graph and aggregate data', () => {

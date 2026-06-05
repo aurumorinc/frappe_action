@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { domObserver } from '../../../lib/dom_observer';
+import { domObserver } from '../../../src/utils/dom_observer';
 
 describe('domObserver', () => {
   beforeEach(() => {

@@ -13,7 +13,7 @@ vi.mock('frappe-ui', () => ({
 describe('ToDo.vue (HelpModal)', () => {
   it('renders the full modal initially', () => {
     const wrapper = mount(ToDo);
-    expect(wrapper.text()).toContain('Getting started');
+    expect(wrapper.text()).toContain('Todos');
     expect(wrapper.text()).toContain('0/0 todos completed');
   });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { networkObserver } from '../../../lib/network_observer';
+import { networkObserver } from '../../../src/utils/network_observer';
 
 describe('networkObserver', () => {
   beforeEach(() => {

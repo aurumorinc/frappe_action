@@ -1,7 +1,8 @@
+import { browser } from "wxt/browser";
 import { defineContentScript, createShadowRootUi } from '#imports';
 import { createApp } from 'vue';
 import ToDo from './ToDo.vue';
-import { domObserver } from "../lib/dom_observer";
+import { domObserver } from "../utils/dom_observer";
 import '../assets/tailwind.css'; // Import tailwind styles
 
 export default defineContentScript({
@@ -12,23 +13,33 @@ export default defineContentScript({
     let isMounted = false;
 
     // --- Background Listeners ---
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.type === "START_DOM_OBSERVER") {
         domObserver(message.payload).then((result) => {
           if (result.success) {
-            chrome.runtime.sendMessage({
+            browser.runtime.sendMessage({
               type: "DOM_OBSERVER_RESULT",
               payload: result.value
             });
           }
         });
       } else if (message.type === "TOGGLE_ORBIT_UI") {
-        if (!isMounted) {
-          ui.mount();
-          isMounted = true;
+        if (ui) {
+          if (!isMounted) {
+            ui.mount();
+            isMounted = true;
+          } else {
+            ui.remove();
+            isMounted = false;
+          }
         } else {
-          ui.remove();
-          isMounted = false;
+          // If UI is not ready yet, wait a bit and try again
+          setTimeout(() => {
+            if (ui && !isMounted) {
+              ui.mount();
+              isMounted = true;
+            }
+          }, 500);
         }
       }
     });
@@ -46,7 +57,7 @@ export default defineContentScript({
       if (event.source !== window) return;
       
       if (event.data && event.data.type === "ORBIT_GET_REDIRECT_URI") {
-        chrome.runtime.sendMessage({ type: "GET_REDIRECT_URI" }, (response) => {
+        browser.runtime.sendMessage({ type: "GET_REDIRECT_URI" }, (response) => {
           if (response && response.redirect_uri) {
             window.postMessage({
               type: "ORBIT_REDIRECT_URI",
@@ -55,7 +66,7 @@ export default defineContentScript({
           }
         });
       } else if (event.data && event.data.type === "ORBIT_START_AUTH") {
-        chrome.runtime.sendMessage({
+        browser.runtime.sendMessage({
           type: "START_OAUTH_FLOW",
           payload: event.data.payload
         }, (response) => {
