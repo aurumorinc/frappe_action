@@ -1,3 +1,4 @@
+import { browser } from "wxt/browser";
 import { defineContentScript } from '#imports';
 
 export default defineContentScript({
@@ -10,7 +11,7 @@ export default defineContentScript({
       if (event.data && event.data.type === "ORBIT_START_AUTH") {
         console.log("Orbit Extension: Received auth request", event.data.payload);
         
-        chrome.runtime.sendMessage(
+        browser.runtime.sendMessage(
           {
             type: "START_OAUTH_FLOW",
             payload: event.data.payload

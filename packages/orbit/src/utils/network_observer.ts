@@ -1,4 +1,5 @@
-import { Result } from "./engine";
+import { browser } from "wxt/browser";
+import { Result } from "../services/engine";
 
 export interface NetworkObserverConfig {
   target_selector: string; // URL regex
@@ -7,10 +8,10 @@ export interface NetworkObserverConfig {
 
 export function networkObserver(config: NetworkObserverConfig): Promise<Result<unknown>> {
   return new Promise((resolve) => {
-    const listener = (details: chrome.webRequest.WebRequestBodyDetails) => {
+    const listener = (details: browser.webRequest.WebRequestBodyDetails) => {
       const regex = new RegExp(config.target_selector);
       if (regex.test(details.url)) {
-        chrome.webRequest.onBeforeRequest.removeListener(listener);
+        browser.webRequest.onBeforeRequest.removeListener(listener);
         
         if (config.extract_target === 'request_body' && details.requestBody) {
           let body = null;
@@ -27,7 +28,7 @@ export function networkObserver(config: NetworkObserverConfig): Promise<Result<u
       }
     };
 
-    chrome.webRequest.onBeforeRequest.addListener(
+    browser.webRequest.onBeforeRequest.addListener(
       listener,
       { urls: ["<all_urls>"] },
       ["requestBody"]

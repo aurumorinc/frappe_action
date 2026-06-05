@@ -1,27 +1,27 @@
 import { defineBackground } from '#imports';
-import { Engine, ActionGraph } from "../lib/engine";
-import { networkObserver } from "../lib/network_observer";
-import { saveSite, getActiveSite } from "../lib/auth_storage";
+import { Engine, ActionGraph } from "../services/engine";
+import { networkObserver } from "../utils/network_observer";
+import { saveSite, getActiveSite } from "../services/auth";
 
 export default defineBackground(() => {
   let currentEngine: Engine | null = null;
   let currentTodo: any = null;
 
-  chrome.action.onClicked.addListener((tab) => {
+  browser.action.onClicked.addListener((tab) => {
     if (tab.id) {
-      chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_ORBIT_UI" }).catch(() => {
+      browser.tabs.sendMessage(tab.id, { type: "TOGGLE_ORBIT_UI" }).catch(() => {
         // Ignore error if content script is not injected (e.g., on chrome:// pages)
       });
     }
   });
 
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "GET_REDIRECT_URI") {
-      sendResponse({ redirect_uri: chrome.identity.getRedirectURL() });
+      sendResponse({ redirect_uri: browser.identity.getRedirectURL() });
       return true;
     } else if (message.type === "START_OAUTH_FLOW") {
       const { siteUrl, clientId } = message.payload;
-      const redirectUri = chrome.identity.getRedirectURL();
+      const redirectUri = browser.identity.getRedirectURL();
       
       const authUrl = new URL("/api/method/frappe.integrations.oauth2.authorize", siteUrl);
       authUrl.searchParams.set("client_id", clientId);
@@ -29,14 +29,14 @@ export default defineBackground(() => {
       authUrl.searchParams.set("redirect_uri", redirectUri);
       authUrl.searchParams.set("scope", "all");
 
-      chrome.identity.launchWebAuthFlow(
+      browser.identity.launchWebAuthFlow(
         {
           url: authUrl.toString(),
           interactive: true
         },
         async (redirectUrl) => {
-          if (chrome.runtime.lastError || !redirectUrl) {
-            sendResponse({ success: false, error: chrome.runtime.lastError?.message });
+          if (browser.runtime.lastError || !redirectUrl) {
+            sendResponse({ success: false, error: browser.runtime.lastError?.message });
             return;
           }
 
@@ -172,9 +172,9 @@ export default defineBackground(() => {
     if (node.type === "trigger") {
       if (node.data.url_template) {
         const url = currentEngine.interpolateString(node.data.url_template);
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (tabs[0]?.id) {
-            chrome.tabs.update(tabs[0].id, { url });
+            browser.tabs.update(tabs[0].id, { url });
           }
         });
       }
@@ -183,9 +183,9 @@ export default defineBackground(() => {
     } else if (node.type === "redirect") {
       if (node.data.url_template) {
         const url = currentEngine.interpolateString(node.data.url_template);
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (tabs[0]?.id) {
-            chrome.tabs.update(tabs[0].id, { url });
+            browser.tabs.update(tabs[0].id, { url });
           }
         });
       }
@@ -220,9 +220,9 @@ export default defineBackground(() => {
       }
     } else if (node.type === "get-text" || node.type === "element-exists" || node.type === "element-clicked") {
       // Send message to content script to start DOM observer
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0]?.id) {
-          chrome.tabs.sendMessage(tabs[0].id, {
+          browser.tabs.sendMessage(tabs[0].id, {
             type: "START_DOM_OBSERVER",
             payload: {
               target_selector: node.data.target_selector,

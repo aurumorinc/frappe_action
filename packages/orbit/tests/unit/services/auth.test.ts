@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getSites, saveSite, getActiveSite, SiteAuth } from '../../../lib/auth_storage';
+import { getSites, saveSite, getActiveSite, SiteAuth } from '../../../src/services/auth';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 
 describe('auth_storage', () => {
