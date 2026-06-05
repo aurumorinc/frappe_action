@@ -1,13 +1,15 @@
-export type NodeType = 
-  | 'trigger' 
-  | 'element-exists' 
-  | 'get-text' 
-  | 'loop-elements' 
-  | 'loop-breakpoint' 
-  | 'network-request' 
-  | 'guide-user' 
-  | 'sub-task' 
-  | 'manual-step';
+export type NodeType =
+  | 'trigger'
+  | 'element-exists'
+  | 'get-text'
+  | 'loop-elements'
+  | 'loop-breakpoint'
+  | 'network-request'
+  | 'guide-user'
+  | 'sub-task'
+  | 'manual-step'
+  | 'redirect'
+  | 'element-clicked';
 
 export interface ActionNode {
   id: string;
@@ -16,6 +18,9 @@ export interface ActionNode {
     target_selector?: string;
     extract_target?: string;
     data_key?: string;
+    url_template?: string;
+    message?: string;
+    is_sub_task?: boolean;
   };
 }
 
@@ -54,6 +59,13 @@ export class Engine {
   public getCurrentNode(): ActionNode | null {
     if (!this.currentNodeId) return null;
     return this.graph.nodes.find(n => n.id === this.currentNodeId) || null;
+  }
+
+  public interpolateString(template: string): string {
+    return template.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+      const value = this.scrapedData[key.trim()];
+      return value !== undefined ? String(value) : match;
+    });
   }
 
   public advance(data?: Record<string, unknown>): Result<ActionNode | null> {
