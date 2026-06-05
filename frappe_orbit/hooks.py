@@ -86,12 +86,12 @@ app_license = "mit"
 # ------------
 
 # before_install = "frappe_orbit.install.before_install"
-# after_install = "frappe_orbit.install.after_install"
+after_install = "frappe_orbit.install.after_install"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "frappe_orbit.uninstall.before_uninstall"
+before_uninstall = "frappe_orbit.uninstall.before_uninstall"
 # after_uninstall = "frappe_orbit.uninstall.after_uninstall"
 
 # Integration Setup
@@ -120,13 +120,13 @@ app_license = "mit"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+	"OAuth Client": "frappe_orbit.integrations.oauth2.get_permission_query_conditions",
+}
+
+has_permission = {
+	"OAuth Client": "frappe_orbit.integrations.oauth2.has_permission",
+}
 
 # Document Events
 # ---------------
@@ -259,5 +259,4 @@ fixtures = [
 		]
 	]}
 ]
-
 
