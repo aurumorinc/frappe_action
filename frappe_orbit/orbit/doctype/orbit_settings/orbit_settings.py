@@ -7,7 +7,7 @@ class OrbitSettings(Document):
 @frappe.whitelist()
 def get_or_create_oauth_client(redirect_uri=None):
     frappe.log_error(f"get_or_create_oauth_client called with redirect_uri: {redirect_uri}", "OAuth Debug")
-    client_name = "Frappe Orbit Extension"
+    client_name = "Orbit"
     
     # Check if client already exists
     client_id = frappe.db.get_value("OAuth Client", {"app_name": client_name}, "client_id")
@@ -58,25 +58,9 @@ def get_or_create_oauth_client(redirect_uri=None):
         
     return client_id
 
-@frappe.whitelist(allow_guest=True)
-def custom_authorize(**kwargs):
-    client_id = kwargs.get("client_id")
-    redirect_uri = kwargs.get("redirect_uri")
-    
-    if client_id and redirect_uri:
-        # Check if this is the Orbit client
-        client_name = frappe.db.get_value("OAuth Client", {"client_id": client_id}, "app_name")
-        if client_name == "Frappe Orbit Extension":
-            # Ensure the redirect_uri is in the client's allowed list
-            get_or_create_oauth_client(redirect_uri=redirect_uri)
-            
-    # Call the original authorize method
-    from frappe.integrations.oauth2 import authorize
-    return authorize(**kwargs)
-
 @frappe.whitelist()
 def get_authorization_status():
-    client_name = "Frappe Orbit Extension"
+    client_name = "Orbit"
     client_id = frappe.db.get_value("OAuth Client", {"app_name": client_name}, "client_id")
     if not client_id:
         return False
@@ -91,7 +75,7 @@ def get_authorization_status():
 
 @frappe.whitelist()
 def deauthorize():
-    client_name = "Frappe Orbit Extension"
+    client_name = "Orbit"
     client_id = frappe.db.get_value("OAuth Client", {"app_name": client_name}, "client_id")
     if not client_id:
         return False
