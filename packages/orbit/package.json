@@ -12,7 +12,8 @@
     "zip": "wxt zip",
     "postinstall": "wxt prepare",
     "test": "vitest run",
-    "test:e2e": "wxt build && xvfb-run playwright test"
+    "test:e2e": "wxt build && playwright test",
+    "test:e2e:ci": "wxt build && xvfb-run playwright test"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +21,7 @@
   "dependencies": {
     "frappe-ui": "^0.1.278",
     "lucide-vue-next": "^0.378.0",
+    "pino": "^10.3.1",
     "vue": "^3.4.21"
   },
   "devDependencies": {
@@ -28,6 +30,8 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/vue": "^8.0.3",
     "@types/chrome": "^0.1.42",
+    "@types/node": "^25.9.1",
+    "@types/pino": "^7.0.4",
     "@vitejs/plugin-vue": "^6.0.7",
     "@wxt-dev/auto-icons": "^1.1.1",
     "@wxt-dev/module-vue": "^1.0.0",

@@ -3,6 +3,7 @@ import { defineContentScript, createShadowRootUi } from '#imports';
 import { createApp } from 'vue';
 import ToDo from './ToDo.vue';
 import { domObserver } from "../utils/dom_observer";
+import logger from "../utils/logger";
 import '../assets/tailwind.css'; // Import tailwind styles
 
 export default defineContentScript({
@@ -24,22 +25,39 @@ export default defineContentScript({
           }
         });
       } else if (message.type === "TOGGLE_ORBIT_UI") {
+        logger.debug("Received TOGGLE_ORBIT_UI message");
         if (ui) {
           if (!isMounted) {
-            ui.mount();
-            isMounted = true;
+            logger.debug("Mounting UI...");
+            try {
+              ui.mount();
+              isMounted = true;
+              logger.info("UI mounted successfully");
+            } catch (e) {
+              logger.error({ err: e }, "Error mounting UI");
+            }
           } else {
+            logger.debug("Removing UI...");
             ui.remove();
             isMounted = false;
           }
         } else {
+          logger.warn("UI not ready yet, waiting...");
           // If UI is not ready yet, wait a bit and try again
           setTimeout(() => {
             if (ui && !isMounted) {
-              ui.mount();
-              isMounted = true;
+              logger.debug("Mounting UI after delay...");
+              try {
+                ui.mount();
+                isMounted = true;
+                logger.info("UI mounted successfully after delay");
+              } catch (e) {
+                logger.error({ err: e }, "Error mounting UI after delay");
+              }
+            } else if (!ui) {
+              logger.error("UI failed to initialize completely.");
             }
-          }, 500);
+          }, 1000);
         }
       }
     });
@@ -49,7 +67,7 @@ export default defineContentScript({
       const actionName = customEvent.detail?.action_name;
 
       if (actionName) {
-        console.log("Headless bot requested action:", actionName);
+        logger.info({ actionName }, "Headless bot requested action");
       }
     });
 
@@ -81,9 +99,10 @@ export default defineContentScript({
 
     ui = await createShadowRootUi(ctx, {
       name: 'orbit-copilot-shadow-root',
-      position: 'inline',
+      position: 'overlay',
       anchor: 'body',
       append: 'last',
+      zIndex: 2147483647,
       onMount: (container) => {
         const app = createApp(ToDo);
         app.mount(container);

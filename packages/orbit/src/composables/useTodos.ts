@@ -3,6 +3,7 @@ import { getSites } from '../services/auth';
 import { fetchTodosFromSites, updateTodoStatus, fetchActionGraph } from '../services/api';
 import { startAction } from '../services/extension';
 import TaskIcon from '../icons/TaskIcon.vue';
+import logger from '../utils/logger';
 
 export function useTodos() {
   const steps = ref<any[]>([]);
@@ -130,7 +131,7 @@ export function useTodos() {
         dependsOn: todo.depends_on,
         site: todo.site,
         onClick: async () => {
-          console.log(`Clicked ${todo.name}`);
+          logger.debug({ todoName: todo.name }, "Todo clicked");
           if (todo.action) {
             const actionData = await fetchActionGraph(todo.site, todo.action);
             if (actionData && actionData.compiled_json) {
@@ -140,7 +141,7 @@ export function useTodos() {
         }
       }));
     } catch (error) {
-      console.error("Error fetching sites or todos:", error);
+      logger.error({ err: error }, "Error fetching sites or todos");
     } finally {
       isLoading.value = false;
     }
