@@ -338,7 +338,7 @@ async function fetchTodos() {
 
     for (const site of sites) {
       try {
-        const response = await fetch(`${site.url}/api/resource/ToDo?fields=["name","description","status","depends_on"]&limit_page_length=20`, {
+        const response = await fetch(`${site.url}/api/resource/ToDo?fields=["name","description","status","depends_on","action"]&limit_page_length=20`, {
           headers: {
             'Authorization': `Bearer ${site.accessToken}`
           }
@@ -358,7 +358,7 @@ async function fetchTodos() {
                 console.log(`Clicked ${todo.name}`);
                 // Fetch action graph and start engine
                 try {
-                  const actionRes = await fetch(`${site.url}/api/method/frappe_orbit.todo.get_active_task`, {
+                  const actionRes = await fetch(`${site.url}/api/method/frappe_orbit.action.get?name=${todo.action}`, {
                     headers: { 'Authorization': `Bearer ${site.accessToken}` }
                   });
                   const actionData = await actionRes.json();
@@ -366,8 +366,8 @@ async function fetchTodos() {
                     chrome.runtime.sendMessage({
                       type: "START_ACTION",
                       payload: {
-                        todo_id: todo.name,
-                        compiled_json: actionData.message.compiled_json
+                        todo: todo,
+                        compiled_json: JSON.parse(actionData.message.compiled_json)
                       }
                     });
                   }

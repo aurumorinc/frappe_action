@@ -5,7 +5,7 @@ import { saveSite, getActiveSite } from "../lib/auth_storage";
 
 export default defineBackground(() => {
   let currentEngine: Engine | null = null;
-  let currentTodoId: string | null = null;
+  let currentTodo: any = null;
 
   chrome.action.onClicked.addListener((tab) => {
     if (tab.id) {
@@ -86,7 +86,7 @@ export default defineBackground(() => {
       return true; // Keep message channel open for async response
     } else if (message.type === "START_ACTION") {
       const graph: ActionGraph = message.payload.compiled_json;
-      currentTodoId = message.payload.todo_id;
+      currentTodo = message.payload.todo;
       currentEngine = new Engine(graph);
       
       processNextNode();
@@ -112,19 +112,22 @@ export default defineBackground(() => {
     if (!node) {
       // Action complete
       console.log("Action complete", currentEngine.scrapedData);
-      if (currentTodoId) {
+      if (currentTodo) {
         const site = await getActiveSite();
         if (site) {
           try {
-            await fetch(`${site.url}/api/method/frappe_orbit.todo.submit_task_data`, {
+            await fetch(`${site.url}/api/method/frappe_orbit.todo.submit`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${site.accessToken}`,
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
-                todo_id: currentTodoId,
-                scraped_data: currentEngine.scrapedData
+                doc: {
+                  ...currentTodo,
+                  response_body: JSON.stringify(currentEngine.scrapedData),
+                  status: 'Closed'
+                }
               })
             });
           } catch (e) {
@@ -135,7 +138,7 @@ export default defineBackground(() => {
       return;
     }
 
-    if (node.data.is_sub_task && currentTodoId) {
+    if (node.data.is_sub_task && currentTodo) {
       const site = await getActiveSite();
       if (site) {
         try {
@@ -153,7 +156,7 @@ export default defineBackground(() => {
             },
             body: JSON.stringify({
               description: node.data.message || `Sub-task for node ${node.id}`,
-              depends_on: currentTodoId,
+              depends_on: currentTodo.name,
               status: 'Open'
             })
           });

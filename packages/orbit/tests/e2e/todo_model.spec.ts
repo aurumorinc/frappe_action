@@ -37,6 +37,15 @@ test.describe('Todo Model E2E', () => {
       });
     });
 
+    // Mock the action get API
+    await page.route('**/api/method/frappe_orbit.action.get*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: { compiled_json: '{"nodes":[],"edges":[]}' } })
+      });
+    });
+
     // Trigger the UI
     let [background] = context.serviceWorkers();
     if (!background) {
@@ -67,7 +76,8 @@ test.describe('Todo Model E2E', () => {
     const mockTodos = Array.from({ length: 15 }, (_, i) => ({
       name: `TODO-${i + 1}`,
       description: `Test Todo ${i + 1}`,
-      status: 'Open'
+      status: 'Open',
+      action: 'Test Action'
     }));
 
     await page.route('**/api/resource/ToDo*', async (route) => {
@@ -75,6 +85,14 @@ test.describe('Todo Model E2E', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ data: mockTodos })
+      });
+    });
+
+    await page.route('**/api/method/frappe_orbit.action.get*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: { compiled_json: '{"nodes":[],"edges":[]}' } })
       });
     });
 
@@ -104,8 +122,8 @@ test.describe('Todo Model E2E', () => {
   test('Nested Action Nodes', async ({ page, context }) => {
     // Mock todos with dependencies (nested action nodes)
     const mockTodos = [
-      { name: 'TODO-1', description: 'Parent Todo', status: 'Open' },
-      { name: 'TODO-2', description: 'Child Todo', status: 'Open', dependsOn: 'TODO-1' }
+      { name: 'TODO-1', description: 'Parent Todo', status: 'Open', action: 'Test Action' },
+      { name: 'TODO-2', description: 'Child Todo', status: 'Open', dependsOn: 'TODO-1', action: 'Test Action' }
     ];
 
     await page.route('**/api/resource/ToDo*', async (route) => {
@@ -113,6 +131,14 @@ test.describe('Todo Model E2E', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ data: mockTodos })
+      });
+    });
+
+    await page.route('**/api/method/frappe_orbit.action.get*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: { compiled_json: '{"nodes":[],"edges":[]}' } })
       });
     });
 
@@ -143,8 +169,8 @@ test.describe('Todo Model E2E', () => {
 
   test('Auto-Update Progress and Manual Completion', async ({ page, context }) => {
     const mockTodos = [
-      { name: 'TODO-1', description: 'Test Todo 1', status: 'Open' },
-      { name: 'TODO-2', description: 'Test Todo 2', status: 'Open' }
+      { name: 'TODO-1', description: 'Test Todo 1', status: 'Open', action: 'Test Action' },
+      { name: 'TODO-2', description: 'Test Todo 2', status: 'Open', action: 'Test Action' }
     ];
 
     await page.route('**/api/resource/ToDo*', async (route) => {
@@ -162,6 +188,14 @@ test.describe('Todo Model E2E', () => {
           body: JSON.stringify({ data: mockTodos })
         });
       }
+    });
+
+    await page.route('**/api/method/frappe_orbit.action.get*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: { compiled_json: '{"nodes":[],"edges":[]}' } })
+      });
     });
 
     let [background] = context.serviceWorkers();
@@ -200,8 +234,8 @@ test.describe('Todo Model E2E', () => {
 
   test('"Mark Completed" Button (Skip All)', async ({ page, context }) => {
     const mockTodos = [
-      { name: 'TODO-1', description: 'Test Todo 1', status: 'Open' },
-      { name: 'TODO-2', description: 'Test Todo 2', status: 'Open' }
+      { name: 'TODO-1', description: 'Test Todo 1', status: 'Open', action: 'Test Action' },
+      { name: 'TODO-2', description: 'Test Todo 2', status: 'Open', action: 'Test Action' }
     ];
 
     await page.route('**/api/resource/ToDo*', async (route) => {
@@ -218,6 +252,14 @@ test.describe('Todo Model E2E', () => {
           body: JSON.stringify({ data: mockTodos })
         });
       }
+    });
+
+    await page.route('**/api/method/frappe_orbit.action.get*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: { compiled_json: '{"nodes":[],"edges":[]}' } })
+      });
     });
 
     let [background] = context.serviceWorkers();

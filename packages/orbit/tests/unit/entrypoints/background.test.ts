@@ -5,15 +5,17 @@ import * as authStorage from '../../../lib/auth_storage';
 // Mock the background script dependencies
 vi.mock('../../../lib/engine', () => {
   return {
-    Engine: vi.fn().mockImplementation(() => ({
-      getCurrentNode: vi.fn().mockReturnValue({ id: '1', type: 'trigger', data: {} }),
-      advance: vi.fn()
-    }))
+    Engine: class {
+      getCurrentNode = vi.fn().mockReturnValue(null);
+      advance = vi.fn();
+      scrapedData = { test: 'data' };
+    }
   };
 });
 
 vi.mock('../../../lib/auth_storage', () => ({
-  saveSite: vi.fn()
+  saveSite: vi.fn(),
+  getActiveSite: vi.fn()
 }));
 
 describe('background', () => {
@@ -97,5 +99,69 @@ describe('background', () => {
       accessToken: 'mock_access_token',
       isActive: true
     }));
+  });
+
+  it('should handle START_ACTION and submit full ToDo doc', async () => {
+    // Mock fetch for submit
+    global.fetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ status: 'success' })
+    });
+
+    // Mock getActiveSite
+    vi.spyOn(authStorage, 'getActiveSite').mockResolvedValue({
+      url: 'https://example.com',
+      accessToken: 'mock_token',
+      refreshToken: 'mock_refresh',
+      clientId: 'client123',
+      id: 'site1',
+      isActive: true,
+      expiresAt: Date.now() + 3600000
+    });
+
+    const mockListener = vi.fn();
+    global.chrome = {
+      ...global.chrome,
+      runtime: {
+        ...global.chrome?.runtime,
+        onMessage: {
+          addListener: vi.fn((fn) => {
+            mockListener.mockImplementation(fn);
+          })
+        }
+      },
+      action: {
+        onClicked: {
+          addListener: vi.fn()
+        }
+      }
+    } as any;
+
+    vi.resetModules();
+    const bg = await import('../../../entrypoints/background');
+    bg.default.main();
+
+    const mockTodo = { name: 'TODO-123', description: 'Test', status: 'Open' };
+    const mockGraph = { nodes: [], edges: [] };
+
+    // Send START_ACTION
+    await new Promise((resolve) => {
+      mockListener(
+        { type: 'START_ACTION', payload: { todo: mockTodo, compiled_json: mockGraph } },
+        {},
+        resolve
+      );
+    });
+
+    // Since the mock engine returns null for getCurrentNode, it will immediately complete the action
+    // and call submit. We need to wait a tick for the async fetch to happen.
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://example.com/api/method/frappe_orbit.todo.submit',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('"name":"TODO-123"')
+      })
+    );
   });
 });
