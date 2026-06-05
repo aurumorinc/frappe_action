@@ -178,7 +178,7 @@ app_license = "mit"
 # ------------------------------
 #
 override_whitelisted_methods = {
-	"frappe.integrations.oauth2.authorize": "frappe_orbit.orbit.doctype.orbit_settings.orbit_settings.custom_authorize"
+	"frappe.integrations.oauth2.authorize": "frappe_orbit.integrations.oauth2.authorize"
 }
 #
 # each overriding function accepts a `data` argument;
