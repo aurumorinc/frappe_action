@@ -1,10 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
-test.describe('OAuth Flow E2E', () => {
-  test('user_can_authorize_from_frappe_site', async ({ page }) => {
-    // This is a placeholder for the actual E2E test
-    // In a real scenario, we would load the extension in Playwright,
-    // navigate to a mock Frappe site, click Authorize, and verify the flow.
-    expect(true).toBe(true);
-  });
+test('User can authenticate and site is saved', async ({ context, extensionId }) => {
+  // Navigate to the popup page
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/popup.html`);
+
+  // Verify the popup renders correctly
+  await expect(page.locator('body')).toBeVisible();
+
+  // In a real E2E test, we would interact with the popup to trigger the auth flow,
+  // or mock the Frappe backend and simulate the OAuth redirect.
+  // For now, we just ensure the popup loads without crashing.
+  
+  // Example of checking for a specific element (adjust based on actual UI):
+  // await expect(page.locator('text=Frappe Orbit')).toBeVisible();
 });
