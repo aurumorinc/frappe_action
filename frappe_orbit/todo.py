@@ -3,45 +3,43 @@ import frappe
 from frappe import _
 
 @frappe.whitelist()
-def get_active_task():
+def get_active():
     user = frappe.session.user
     
-    # Find the oldest open ToDo assigned to the user that has a ToDo Template with an Action
+    # Find the oldest open ToDo assigned to the user that has an Action
     todos = frappe.get_all(
         "ToDo",
         filters={
             "allocated_to": user,
             "status": "Open",
-            "todo_template": ["is", "set"]
+            "action": ["is", "set"]
         },
-        fields=["name", "todo_template", "reference_type", "reference_name"],
+        fields=["name", "action", "reference_type", "reference_name"],
         order_by="creation asc"
     )
     
     for todo in todos:
-        template = frappe.get_doc("ToDo Template", todo.todo_template)
-        if template.action_type == "Extension Trigger" and template.action:
-            action = frappe.get_doc("Action", template.action)
+        action = frappe.get_doc("Action", todo.action)
+        
+        # Render target_url with Jinja
+        target_url = action.target_url
+        if target_url:
+            target_url = frappe.render_template(target_url, {"doc": todo})
             
-            # Render target_url with Jinja
-            target_url = action.target_url
-            if target_url:
-                target_url = frappe.render_template(target_url, {"doc": todo})
-                
-            # Translate compiled_json
-            compiled_json = action.compiled_json
-            if compiled_json:
-                compiled_data = json.loads(compiled_json)
-                # Basic translation of text fields if needed, though usually handled on frontend
-                # For now, we just return the JSON
-                
-                return {
-                    "todo_id": todo.name,
-                    "action_name": action.action_name,
-                    "target_url": target_url,
-                    "compiled_json": compiled_data
-                }
-                
+        # Translate compiled_json
+        compiled_json = action.compiled_json
+        if compiled_json:
+            compiled_data = json.loads(compiled_json)
+            # Basic translation of text fields if needed, though usually handled on frontend
+            # For now, we just return the JSON
+            
+            return {
+                "todo_id": todo.name,
+                "action_name": action.action_name,
+                "target_url": target_url,
+                "compiled_json": compiled_data
+            }
+            
     return None
 
 @frappe.whitelist()
@@ -78,19 +76,19 @@ def submit_task_data(todo_id, scraped_data):
     return {"status": "success"}
 
 @frappe.whitelist()
-def trigger_sub_task(parent_todo_id, template_name, context_data=None):
+def trigger_sub(parent_todo_id, action_name, context_data=None):
     parent_todo = frappe.get_doc("ToDo", parent_todo_id)
     
-    if not frappe.db.exists("ToDo Template", template_name):
-        frappe.throw(_("ToDo Template {0} not found").format(template_name))
+    if not frappe.db.exists("Action", action_name):
+        frappe.throw(_("Action {0} not found").format(action_name))
         
     new_todo = frappe.get_doc({
         "doctype": "ToDo",
         "allocated_to": frappe.session.user,
-        "todo_template": template_name,
+        "action": action_name,
         "reference_type": parent_todo.reference_type,
         "reference_name": parent_todo.reference_name,
-        "description": _("Sub-task of {0}").format(parent_todo_id),
+        "description": _("Sub-todo of {0}").format(parent_todo_id),
         "depends_on": parent_todo_id
     })
     

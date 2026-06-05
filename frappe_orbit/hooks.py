@@ -251,12 +251,6 @@ override_whitelisted_methods = {
 # ignore_translatable_strings_from = []
 
 fixtures = [
-	{"dt": "Custom Field", "filters": [
-		[
-			"name", "in", [
-				"ToDo-depends_on"
-			]
-		]
-	]}
+	{"dt": "Custom Field", "filters": [["module", "in", ["Frappe Orbit"]]]}
 ]
 

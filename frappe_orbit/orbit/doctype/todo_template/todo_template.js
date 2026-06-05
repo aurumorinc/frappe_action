@@ -1,8 +1,0 @@
-// Copyright (c) 2026, Aquiveal and contributors
-// For license information, please see license.txt
-
-// frappe.ui.form.on("ToDo Template", {
-// 	refresh(frm) {
-
-// 	},
-// });
