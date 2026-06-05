@@ -1,7 +1,7 @@
 import json
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe_orbit.todo import get_active, submit_task_data
+from frappe_orbit.todo import get_open, submit
 
 class TestTodoAPI(IntegrationTestCase):
     @classmethod
@@ -28,7 +28,7 @@ class TestTodoAPI(IntegrationTestCase):
         frappe.db.rollback()
         super().tearDownClass()
 
-    def test_get_active_should_return_oldest_assigned_todo(self):
+    def test_get_open_should_return_oldest_assigned_todo(self):
         # Create two ToDos
         todo1 = frappe.get_doc({
             "doctype": "ToDo",
@@ -48,14 +48,13 @@ class TestTodoAPI(IntegrationTestCase):
         frappe.db.set_value("ToDo", todo1.name, "creation", "2020-01-01 00:00:00")
         frappe.db.set_value("ToDo", todo2.name, "creation", "2020-01-02 00:00:00")
         
-        active_task = get_active()
+        active_task = get_open()
         
         self.assertIsNotNone(active_task)
-        self.assertEqual(active_task["todo_id"], todo1.name)
-        self.assertEqual(active_task["action_name"], "Test API Action")
-        self.assertEqual(active_task["target_url"], "/app/test")
+        self.assertEqual(active_task["name"], todo1.name)
+        self.assertEqual(active_task["action"], "Test API Action")
 
-    def test_submit_task_data_should_save_payload_and_close_todo(self):
+    def test_submit_should_save_payload_and_close_todo(self):
         todo = frappe.get_doc({
             "doctype": "ToDo",
             "description": "Test Submit",
@@ -65,9 +64,13 @@ class TestTodoAPI(IntegrationTestCase):
         
         payload = {"email": "test@test.com"}
         
-        result = submit_task_data(todo.name, payload)
+        todo_dict = todo.as_dict()
+        todo_dict["response_body"] = json.dumps(payload)
+        todo_dict["status"] = "Closed"
         
-        self.assertEqual(result["status"], "success")
+        result = submit(todo_dict)
+        
+        self.assertEqual(result["status"], "Closed")
         
         todo.reload()
         self.assertEqual(todo.status, "Closed")
