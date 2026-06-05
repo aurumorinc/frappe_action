@@ -37,14 +37,18 @@
           </div>
         </div>
         
-        <div v-if="isLoading" class="todo-state-message">
-          <div class="text-ink-gray-5">Loading todos...</div>
+        <div v-if="isLoading" class="todo-state-message flex-col gap-2">
+          <div class="text-sm text-ink-gray-5">Loading todos...</div>
         </div>
-        <div v-else-if="!hasAuthenticatedSites" class="todo-state-message">
-          <div class="text-ink-gray-5">No authenticated sites found. Please authenticate with a Frappe site to see your todos.</div>
+        <div v-else-if="!hasAuthenticatedSites" class="todo-state-message flex-col gap-2">
+          <FeatherIcon name="alert-circle" class="h-8 w-8 text-ink-gray-4" />
+          <div class="text-base font-medium text-ink-gray-9">No Authenticated Sites</div>
+          <div class="text-sm text-ink-gray-5">Please authenticate with a Frappe site to see your todos.</div>
         </div>
-        <div v-else-if="steps.length === 0" class="todo-state-message">
-          <div class="text-ink-gray-5">You have no pending todos. Great job!</div>
+        <div v-else-if="steps.length === 0" class="todo-state-message flex-col gap-2">
+          <FeatherIcon name="check-circle" class="h-8 w-8 text-ink-gray-4" />
+          <div class="text-base font-medium text-ink-gray-9">All Caught Up</div>
+          <div class="text-sm text-ink-gray-5">You have no pending todos. Great job!</div>
         </div>
         <div v-else class="todo-list-container">
           <div class="todo-list-header">
@@ -219,10 +223,11 @@ onMounted(() => {
 
 <style scoped>
 .todo-modal {
-  @apply fixed z-50 right-0 w-80 h-[calc(100%_-_80px)] text-ink-gray-9 m-5 mt-[62px] p-3 flex gap-2 flex-col justify-between rounded-lg bg-surface-modal shadow-2xl;
+  @apply fixed z-50 right-6 bottom-6 w-[310px] max-h-[80vh] text-ink-gray-9 p-4 flex flex-col rounded-2xl bg-surface-modal;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
 }
 .todo-modal-minimized {
-  @apply top-[calc(100%_-_120px)] border;
+  @apply top-auto bottom-6 border;
 }
 .todo-header {
   @apply flex items-center justify-between px-2 py-1.5;
@@ -249,7 +254,7 @@ onMounted(() => {
   @apply text-base font-medium;
 }
 .todo-welcome-subtitle {
-  @apply text-p-base font-normal;
+  @apply text-sm text-ink-gray-5 mb-2;
 }
 .todo-state-message {
   @apply flex justify-center items-center h-full text-center px-4;
@@ -261,10 +266,10 @@ onMounted(() => {
   @apply flex justify-between items-center py-0.5;
 }
 .todo-list {
-  @apply flex flex-col gap-1.5 overflow-y-auto;
+  @apply flex flex-col gap-3 overflow-y-auto mt-4;
 }
 .todo-item {
-  @apply w-full flex gap-2 justify-between items-center hover:bg-surface-gray-1 rounded px-2 py-1.5 cursor-pointer;
+  @apply w-full flex gap-2 justify-between items-center hover:bg-surface-gray-1 hover:text-ink-gray-9 rounded px-2 py-1.5 cursor-pointer;
 }
 .todo-item-dependent {
   @apply ml-6 border-l-2 border-gray-300 pl-3;
