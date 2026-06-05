@@ -1,7 +1,7 @@
 import json
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe_orbit.todo import get_active_task, submit_task_data
+from frappe_orbit.todo import get_active, submit_task_data
 
 class TestTodoAPI(IntegrationTestCase):
     @classmethod
@@ -21,45 +21,34 @@ class TestTodoAPI(IntegrationTestCase):
         else:
             action = frappe.get_doc("Action", "Test API Action")
             
-        # Create ToDo Template
-        if not frappe.db.exists("ToDo Template", "Test API Template"):
-            template = frappe.get_doc({
-                "doctype": "ToDo Template",
-                "template_name": "Test API Template",
-                "action_type": "Extension Trigger",
-                "action": action.name
-            }).insert()
-        else:
-            template = frappe.get_doc("ToDo Template", "Test API Template")
-            
-        cls.template = template
+        cls.action = action
 
     @classmethod
     def tearDownClass(cls):
         frappe.db.rollback()
         super().tearDownClass()
 
-    def test_get_active_task_should_return_oldest_assigned_todo(self):
+    def test_get_active_should_return_oldest_assigned_todo(self):
         # Create two ToDos
         todo1 = frappe.get_doc({
             "doctype": "ToDo",
             "description": "Test 1",
             "allocated_to": frappe.session.user,
-            "todo_template": self.template.name
+            "action": self.action.name
         }).insert()
         
         todo2 = frappe.get_doc({
             "doctype": "ToDo",
             "description": "Test 2",
             "allocated_to": frappe.session.user,
-            "todo_template": self.template.name
+            "action": self.action.name
         }).insert()
         
         # Ensure todo1 is older
         frappe.db.set_value("ToDo", todo1.name, "creation", "2020-01-01 00:00:00")
         frappe.db.set_value("ToDo", todo2.name, "creation", "2020-01-02 00:00:00")
         
-        active_task = get_active_task()
+        active_task = get_active()
         
         self.assertIsNotNone(active_task)
         self.assertEqual(active_task["todo_id"], todo1.name)
@@ -71,7 +60,7 @@ class TestTodoAPI(IntegrationTestCase):
             "doctype": "ToDo",
             "description": "Test Submit",
             "allocated_to": frappe.session.user,
-            "todo_template": self.template.name
+            "action": self.action.name
         }).insert()
         
         payload = {"email": "test@test.com"}
