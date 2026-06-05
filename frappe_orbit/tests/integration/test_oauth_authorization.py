@@ -5,7 +5,7 @@ from frappe_orbit.orbit.doctype.orbit_settings.orbit_settings import get_or_crea
 class TestOAuthAuthorization(IntegrationTestCase):
     def tearDown(self):
         # Clean up OAuth Client
-        client_name = "Frappe Orbit Extension"
+        client_name = "Orbit"
         client_id = frappe.db.get_value("OAuth Client", {"app_name": client_name}, "name")
         if client_id:
             frappe.delete_doc("OAuth Client", client_id, ignore_permissions=True, force=True)
