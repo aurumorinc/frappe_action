@@ -90,7 +90,8 @@ def trigger_sub_task(parent_todo_id, template_name, context_data=None):
         "todo_template": template_name,
         "reference_type": parent_todo.reference_type,
         "reference_name": parent_todo.reference_name,
-        "description": _("Sub-task of {0}").format(parent_todo_id)
+        "description": _("Sub-task of {0}").format(parent_todo_id),
+        "depends_on": parent_todo_id
     })
     
     new_todo.insert(ignore_permissions=True)

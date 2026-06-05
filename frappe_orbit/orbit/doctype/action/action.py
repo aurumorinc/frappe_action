@@ -23,7 +23,10 @@ class Action(Document):
                 "data": {
                     "target_selector": node.target_selector,
                     "extract_target": node.extract_target,
-                    "data_key": node.data_key
+                    "data_key": node.data_key,
+                    "url_template": node.url_template,
+                    "message": node.message,
+                    "is_sub_task": node.is_sub_task
                 }
             })
 

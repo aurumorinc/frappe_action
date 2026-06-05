@@ -8,9 +8,12 @@
  "field_order": [
   "node_id",
   "node_type",
+  "is_sub_task",
   "target_selector",
   "extract_target",
-  "data_key"
+  "data_key",
+  "url_template",
+  "message"
  ],
  "fields": [
   {
@@ -25,23 +28,44 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Node Type",
-   "options": "trigger\nelement-exists\nget-text\nloop-elements\nloop-breakpoint\nnetwork-request\nguide-user\nsub-task\nmanual-step",
+   "options": "trigger\nelement-exists\nget-text\nloop-elements\nloop-breakpoint\nnetwork-request\nguide-user\nsub-task\nmanual-step\nredirect\nelement-clicked",
    "reqd": 1
   },
   {
+   "default": "0",
+   "fieldname": "is_sub_task",
+   "fieldtype": "Check",
+   "label": "Is Sub Task"
+  },
+  {
+   "depends_on": "eval:in_list(['element-exists', 'get-text', 'loop-elements', 'network-request', 'element-clicked'], doc.node_type)",
    "fieldname": "target_selector",
    "fieldtype": "Data",
    "label": "Target Selector"
   },
   {
+   "depends_on": "eval:in_list(['get-text', 'network-request'], doc.node_type)",
    "fieldname": "extract_target",
    "fieldtype": "Data",
    "label": "Extract Target"
   },
   {
+   "depends_on": "eval:in_list(['get-text', 'network-request'], doc.node_type)",
    "fieldname": "data_key",
    "fieldtype": "Data",
    "label": "Data Key"
+  },
+  {
+   "depends_on": "eval:in_list(['redirect', 'trigger'], doc.node_type)",
+   "fieldname": "url_template",
+   "fieldtype": "Data",
+   "label": "URL Template"
+  },
+  {
+   "depends_on": "eval:doc.node_type=='guide-user'",
+   "fieldname": "message",
+   "fieldtype": "Data",
+   "label": "Message"
   }
  ],
  "grid_page_length": 50,
