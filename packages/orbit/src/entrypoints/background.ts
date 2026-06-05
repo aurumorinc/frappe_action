@@ -2,15 +2,19 @@ import { defineBackground } from '#imports';
 import { Engine, ActionGraph } from "../services/engine";
 import { networkObserver } from "../utils/network_observer";
 import { saveSite, getActiveSite } from "../services/auth";
+import logger from "../utils/logger";
 
 export default defineBackground(() => {
   let currentEngine: Engine | null = null;
   let currentTodo: any = null;
 
   browser.action.onClicked.addListener((tab) => {
+    logger.debug({ tabId: tab.id }, "Action clicked");
     if (tab.id) {
-      browser.tabs.sendMessage(tab.id, { type: "TOGGLE_ORBIT_UI" }).catch(() => {
-        // Ignore error if content script is not injected (e.g., on chrome:// pages)
+      browser.tabs.sendMessage(tab.id, { type: "TOGGLE_ORBIT_UI" }).then(() => {
+        logger.debug({ tabId: tab.id }, "Successfully sent TOGGLE_ORBIT_UI");
+      }).catch((err) => {
+        logger.warn({ tabId: tab.id, err }, "Failed to send TOGGLE_ORBIT_UI (content script likely not injected)");
       });
     }
   });
@@ -111,7 +115,7 @@ export default defineBackground(() => {
     const node = currentEngine.getCurrentNode();
     if (!node) {
       // Action complete
-      console.log("Action complete", currentEngine.scrapedData);
+      logger.info({ scrapedData: currentEngine.scrapedData }, "Action complete");
       if (currentTodo) {
         const site = await getActiveSite();
         if (site) {
@@ -131,7 +135,7 @@ export default defineBackground(() => {
               })
             });
           } catch (e) {
-            console.error("Failed to submit task data", e);
+            logger.error({ err: e }, "Failed to submit task data");
           }
         }
       }
@@ -164,7 +168,7 @@ export default defineBackground(() => {
           // We should wait for this ToDo to be closed, but for now we just create it
           // In a real implementation, we'd poll or wait for a message from the UI
         } catch (e) {
-          console.error("Failed to create sub-task", e);
+          logger.error({ err: e }, "Failed to create sub-task");
         }
       }
     }

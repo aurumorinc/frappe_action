@@ -34,6 +34,7 @@ declare global {
   const isReadonly: typeof import('vue').isReadonly
   const isRef: typeof import('vue').isRef
   const isShallow: typeof import('vue').isShallow
+  const logger: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logger').default
   const markRaw: typeof import('vue').markRaw
   const networkObserver: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/network_observer').networkObserver
   const nextTick: typeof import('vue').nextTick
@@ -156,6 +157,7 @@ declare module 'vue' {
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly isShallow: UnwrapRef<typeof import('vue')['isShallow']>
+    readonly logger: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logger')['default']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
     readonly networkObserver: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/network_observer')['networkObserver']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>

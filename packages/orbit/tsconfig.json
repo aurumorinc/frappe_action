@@ -24,12 +24,14 @@
       "~*": [
         "./src/*"
       ]
-    }
+    },
+    "types": ["node"]
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
+    "tests/**/*.ts",
     ".wxt/types/**/*.d.ts"
   ],
   "exclude": [

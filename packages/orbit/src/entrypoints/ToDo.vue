@@ -144,6 +144,7 @@ import HelpIcon from '../icons/HelpIcon.vue'
 import OrbitLogo from '../icons/OrbitLogo.vue'
 
 import { useTodos } from '../composables/useTodos'
+import logger from '../utils/logger'
 
 const show = ref(true)
 const minimize = ref(false)
@@ -211,6 +212,7 @@ const footerItems = computed(() => {
 })
 
 onMounted(() => {
+  logger.debug("ToDo component mounted");
   fetchTodos();
 })
 </script>

@@ -20,5 +20,6 @@ declare module '#imports' {
   export { fakeBrowser } from 'wxt/testing';
   export { useTodos } from '../src/composables/useTodos';
   export { domObserver, DomObserverConfig } from '../src/utils/dom_observer';
+  export { default as logger } from '../src/utils/logger';
   export { networkObserver, NetworkObserverConfig } from '../src/utils/network_observer';
 }
