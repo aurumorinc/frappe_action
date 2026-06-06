@@ -1,17 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { fakeBrowser } from 'wxt/testing/fake-browser';
+
+vi.mock('wxt/browser', () => ({
+  browser: fakeBrowser
+}));
+
 import { networkObserver } from '../../../src/utils/network_observer';
 
 describe('networkObserver', () => {
   beforeEach(() => {
-    // Mock chrome.webRequest
-    global.chrome = {
-      ...global.chrome,
-      webRequest: {
-        onBeforeRequest: { addListener: vi.fn(), removeListener: vi.fn() },
-        onCompleted: { addListener: vi.fn(), removeListener: vi.fn() },
-        onErrorOccurred: { addListener: vi.fn(), removeListener: vi.fn() }
-      }
-    } as any;
+    fakeBrowser.reset();
+    fakeBrowser.webRequest.onBeforeRequest.addListener = vi.fn();
+    fakeBrowser.webRequest.onCompleted.addListener = vi.fn();
+    fakeBrowser.webRequest.onErrorOccurred.addListener = vi.fn();
   });
 
   it('should intercept and extract json payload', async () => {
