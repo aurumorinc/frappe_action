@@ -6,13 +6,13 @@ function update_auth_status_ui(frm, is_authorized) {
         frm.page.set_indicator(__('Enabled'), 'green');
         
         frm.page.set_primary_action(__('Deauthorize'), function() {
-            frappe.confirm(__('Are you sure you want to deauthorize the Orbit extension?'), () => {
+            frappe.confirm(__('Are you sure you want to disconnect?'), () => {
                 frappe.call({
                     method: 'frappe_orbit.orbit.doctype.orbit_settings.orbit_settings.deauthorize',
                     callback: function(r) {
                         if (r.message) {
                             frappe.show_alert({
-                                message: __('Orbit Extension Deauthorized Successfully!'),
+                                message: __('Successfully disconnected.'),
                                 indicator: 'green'
                             });
                             update_auth_status_ui(frm, false);
@@ -30,7 +30,7 @@ function update_auth_status_ui(frm, is_authorized) {
 
             let authTimeout = setTimeout(() => {
                 frappe.show_alert({
-                    message: __('Authorization timed out. Please ensure the Orbit extension is installed and active.'),
+                    message: __('Connection timed out. Please check if the extension is enabled.'),
                     indicator: 'red'
                 });
                 $btn.prop('disabled', false).text(__('Authorize'));
@@ -57,8 +57,10 @@ frappe.ui.form.on('Orbit Settings', {
     }
 });
 
-window.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'ORBIT_REDIRECT_URI') {
+if (!window._orbitMessageListenerAdded) {
+    window._orbitMessageListenerAdded = true;
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'ORBIT_REDIRECT_URI') {
         let redirect_uri = event.data.payload.redirect_uri;
         frappe.call({
             method: 'frappe_orbit.orbit.doctype.orbit_settings.orbit_settings.get_or_create_oauth_client',
@@ -75,7 +77,7 @@ window.addEventListener('message', function(event) {
                 } else {
                     if (window._orbitAuthTimeout) clearTimeout(window._orbitAuthTimeout);
                     frappe.show_alert({
-                        message: __('Failed to get OAuth client.'),
+                        message: __('Could not retrieve authorization details. Please try again.'),
                         indicator: 'red'
                     });
                     if (window._orbitAuthBtn) window._orbitAuthBtn.prop('disabled', false).text(__('Authorize'));
@@ -91,7 +93,7 @@ window.addEventListener('message', function(event) {
         if (window._orbitAuthBtn) window._orbitAuthBtn.prop('disabled', false).text(__('Authorize'));
         
         frappe.show_alert({
-            message: __('Orbit Extension Authorized Successfully!'),
+            message: __('Connection established successfully.'),
             indicator: 'green'
         });
         
@@ -103,8 +105,9 @@ window.addEventListener('message', function(event) {
         if (window._orbitAuthBtn) window._orbitAuthBtn.prop('disabled', false).text(__('Authorize'));
         
         frappe.show_alert({
-            message: __('Orbit Extension Authorization Failed: ') + (event.data.error || __('Unknown error')),
+            message: __('Authorization failed: ') + (event.data.error || __('Unknown error')) + __('. Please try again.'),
             indicator: 'red'
         });
     }
-});
+    });
+}
