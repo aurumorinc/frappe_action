@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import * as authStorage from '../../../src/services/auth';
 
+vi.mock('wxt/browser', () => ({
+  browser: fakeBrowser
+}));
+
 // Mock the background script dependencies
 vi.mock('../../../src/services/engine', () => {
   return {
@@ -44,42 +48,22 @@ describe('background', () => {
     });
     fakeBrowser.identity.getRedirectURL = vi.fn().mockReturnValue('https://extension.chromiumapp.org/');
 
-    // We need to import the background script to register the listener
-    // Since it's a module with side effects, we import it dynamically
-    const bg = await import('../../../entrypoints/background');
+    vi.resetModules();
+    const bg = await import('../../../src/entrypoints/background');
     bg.default.main();
 
-    // Simulate sending a message by calling the listener directly
-    // fakeBrowser.runtime.onMessage.addListener registers listeners internally
-    // We can trigger it using fakeBrowser.runtime.sendMessage, but we need to handle the async response
-    
-    // Mock the sendResponse function
-    const sendResponse = vi.fn();
-    
     // We need to extract the listener that was registered
-    // Since fakeBrowser doesn't expose the listeners easily, let's mock chrome globally
+    // fakeBrowser.runtime.onMessage.addListener is a mock if we spy on it, but fakeBrowser handles it internally
+    // Let's just use the internal listener array if possible, or mock it
+    // Actually, fakeBrowser.runtime.sendMessage should work if the listener is registered
+    // But fakeBrowser's sendMessage might not support async sendResponse properly
+    // Let's mock the listener directly
     const mockListener = vi.fn();
-    global.chrome = {
-      ...global.chrome,
-      runtime: {
-        ...global.chrome?.runtime,
-        onMessage: {
-          addListener: vi.fn((fn) => {
-            mockListener.mockImplementation(fn);
-          })
-        }
-      },
-      action: {
-        onClicked: {
-          addListener: vi.fn()
-        }
-      }
-    } as any;
+    fakeBrowser.runtime.onMessage.addListener = vi.fn((fn) => {
+      mockListener.mockImplementation(fn);
+    });
 
-    // Re-import to register with our mock
-    vi.resetModules();
-    const bg2 = await import('../../../entrypoints/background');
-    bg2.default.main();
+    bg.default.main();
 
     const response = await new Promise((resolve) => {
       mockListener(
@@ -119,25 +103,12 @@ describe('background', () => {
     });
 
     const mockListener = vi.fn();
-    global.chrome = {
-      ...global.chrome,
-      runtime: {
-        ...global.chrome?.runtime,
-        onMessage: {
-          addListener: vi.fn((fn) => {
-            mockListener.mockImplementation(fn);
-          })
-        }
-      },
-      action: {
-        onClicked: {
-          addListener: vi.fn()
-        }
-      }
-    } as any;
+    fakeBrowser.runtime.onMessage.addListener = vi.fn((fn) => {
+      mockListener.mockImplementation(fn);
+    });
 
     vi.resetModules();
-    const bg = await import('../../../entrypoints/background');
+    const bg = await import('../../../src/entrypoints/background');
     bg.default.main();
 
     const mockTodo = { name: 'TODO-123', description: 'Test', status: 'Open' };

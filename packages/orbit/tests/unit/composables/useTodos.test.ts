@@ -8,7 +8,9 @@ vi.mock('../../../src/services/auth', () => ({
 }));
 
 vi.mock('../../../src/services/api', () => ({
-  fetchTodosFromSites: vi.fn(),
+  fetchReportFromSites: vi.fn(),
+  fetchOpenTodosFromSites: vi.fn(),
+  fetchSubTodosFromSite: vi.fn(),
   updateTodoStatus: vi.fn(),
   fetchActionGraph: vi.fn()
 }));
@@ -32,33 +34,37 @@ describe('useTodos.ts', () => {
     expect(isLoading.value).toBe(false);
   });
 
-  it('fetchTodos populates steps and sorts them', async () => {
+  it('fetchTodos populates actions', async () => {
     const mockSites = [{ url: 'http://test', accessToken: 'token' }];
     vi.mocked(authService.getSites).mockResolvedValueOnce(mockSites as any);
     
+    const mockReport = { totalOpen: 2, completedToday: 1 };
+    vi.mocked(apiService.fetchReportFromSites).mockResolvedValueOnce(mockReport);
+
     const mockTodos = [
-      { name: 'child', depends_on: 'parent', status: 'Open' },
       { name: 'parent', status: 'Open' }
     ];
-    vi.mocked(apiService.fetchTodosFromSites).mockResolvedValueOnce(mockTodos);
+    vi.mocked(apiService.fetchOpenTodosFromSites).mockResolvedValueOnce(mockTodos);
     
-    const { fetchTodos, steps, visibleSteps } = useTodos();
+    const { fetchTodos, actions, visibleActions, reportData } = useTodos();
     
     await fetchTodos();
     
-    expect(steps.value).toHaveLength(2);
-    // Parent should be first in visibleSteps
-    expect(visibleSteps.value[0].name).toBe('parent');
-    expect(visibleSteps.value[1].name).toBe('child');
+    expect(actions.value).toHaveLength(1);
+    expect(visibleActions.value[0].name).toBe('parent');
+    expect(reportData.value.totalOpen).toBe(2);
   });
 
   it('skip updates status and calls api', async () => {
-    const { steps, skip } = useTodos();
-    steps.value = [{ name: 'todo1', completed: false, site: {} }];
+    const { actions, skip } = useTodos();
+    actions.value = [{ name: 'todo1', completed: false, site: {} }];
     
+    // Mock fetchTodos to prevent error during refreshCurrentView
+    vi.mocked(authService.getSites).mockResolvedValueOnce([]);
+
     await skip('todo1');
     
-    expect(steps.value[0].completed).toBe(true);
-    expect(apiService.updateTodoStatus).toHaveBeenCalledWith({}, 'todo1', 'Closed');
+    expect(actions.value[0].completed).toBe(true);
+    expect(apiService.updateTodoStatus).toHaveBeenCalledWith({}, 'todo1', 'Cancelled');
   });
 });

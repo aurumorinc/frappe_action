@@ -4,3 +4,6 @@
 [submodule "third_party/wxt"]
 	path = third_party/wxt
 	url = https://github.com/wxt-dev/wxt
+[submodule "third_party/frappe-ui"]
+	path = third_party/frappe-ui
+	url = https://github.com/frappe/frappe-ui

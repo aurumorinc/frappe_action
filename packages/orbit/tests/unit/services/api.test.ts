@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { updateTodoStatus, fetchTodosFromSites, fetchActionGraph } from '../../../src/services/api';
+import { updateTodoStatus, fetchOpenTodosFromSites, fetchActionGraph } from '../../../src/services/api';
 
 describe('api.ts', () => {
   beforeEach(() => {
@@ -22,14 +22,14 @@ describe('api.ts', () => {
     expect(result).toBe(false);
   });
 
-  it('fetchTodosFromSites returns combined todos', async () => {
+  it('fetchOpenTodosFromSites returns combined todos', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ data: [{ name: 'todo1' }] })
+      json: async () => ({ message: { open_todos: [{ name: 'todo1', priority: 'High', creation: '2023-01-01' }] } })
     } as Response);
     
     const sites = [{ url: 'http://test', accessToken: 'token' }];
-    const result = await fetchTodosFromSites(sites);
+    const result = await fetchOpenTodosFromSites(sites);
     
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe('todo1');

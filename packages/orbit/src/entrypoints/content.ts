@@ -103,7 +103,7 @@ export default defineContentScript({
       anchor: 'body',
       append: 'last',
       zIndex: 2147483647,
-      onMount: (container) => {
+      onMount: (container, shadow, shadowHost) => {
         const app = createApp(ToDo);
         app.mount(container);
         return app;

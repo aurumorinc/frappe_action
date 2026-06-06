@@ -23,7 +23,7 @@ describe('content_script', () => {
     vi.mocked(domObserverModule.domObserver).mockResolvedValue({ success: true, value: 'extracted_data' });
     
     // Import the content script to register listeners
-    const cs = await import('../../entrypoints/content');
+    const cs = await import('../../src/entrypoints/content');
     cs.default.main({ onInvalidated: vi.fn() } as any);
     
     // Simulate receiving a message from background
@@ -44,16 +44,17 @@ describe('content_script', () => {
   });
 
   it('should listen for ORBIT_START_HEADLESS_ACTION event', async () => {
-    const cs = await import('../../entrypoints/content');
+    const cs = await import('../../src/entrypoints/content');
     cs.default.main({ onInvalidated: vi.fn() } as any);
     
-    const consoleSpy = vi.spyOn(console, 'log');
+    const logger = (await import('../../src/utils/logger')).default;
+    const loggerSpy = vi.spyOn(logger, 'info');
     
     const event = new CustomEvent('ORBIT_START_HEADLESS_ACTION', {
       detail: { action_name: 'Test Action' }
     });
     window.dispatchEvent(event);
     
-    expect(consoleSpy).toHaveBeenCalledWith('Headless bot requested action:', 'Test Action');
+    expect(loggerSpy).toHaveBeenCalledWith({ actionName: 'Test Action' }, 'Headless bot requested action');
   });
 });
