@@ -1,113 +1,153 @@
 import { ref, computed, markRaw } from 'vue';
 import { getSites } from '../services/auth';
-import { fetchTodosFromSites, updateTodoStatus, fetchActionGraph } from '../services/api';
+import { updateTodoStatus, fetchActionGraph } from '../services/api';
 import { startAction } from '../services/extension';
 import TaskIcon from '../icons/TaskIcon.vue';
 import logger from '../utils/logger';
 
 export function useTodos() {
-  const steps = ref<any[]>([]);
+  const actions = ref<any[]>([]);
+  const subTasks = ref<any[]>([]);
+  const navigationStack = ref<any[]>([]);
+  const reportData = ref({ totalOpen: 0, completedToday: 0 });
+  
   const isLoading = ref(true);
   const hasAuthenticatedSites = ref(false);
   const isOnboardingStepsCompleted = ref(false);
 
-  const totalSteps = computed(() => steps.value.length);
-  const stepsCompleted = computed(() => steps.value.filter(s => s.completed).length);
-  const completedPercentage = computed(() => totalSteps.value === 0 ? 0 : Math.round((stepsCompleted.value / totalSteps.value) * 100) || 0);
+  const totalActions = computed(() => {
+    if (navigationStack.value.length > 0) {
+      return subTasks.value.length;
+    }
+    return reportData.value.totalOpen + reportData.value.completedToday;
+  });
+  
+  const actionsCompleted = computed(() => {
+    if (navigationStack.value.length > 0) {
+      return subTasks.value.filter(s => s.completed).length;
+    }
+    return reportData.value.completedToday;
+  });
+  
+  const completedPercentage = computed(() => totalActions.value === 0 ? 0 : Math.round((actionsCompleted.value / totalActions.value) * 100) || 0);
 
-  const visibleSteps = computed(() => {
-    const sorted: any[] = [];
-    const parentMap = new Map();
-    const rootSteps: any[] = [];
-
-    steps.value.forEach(step => {
-      if (step.dependsOn) {
-        if (!parentMap.has(step.dependsOn)) {
-          parentMap.set(step.dependsOn, []);
-        }
-        parentMap.get(step.dependsOn).push(step);
-      } else {
-        rootSteps.push(step);
-      }
-    });
-
-    rootSteps.forEach(root => {
-      sorted.push(root);
-      if (parentMap.has(root.name)) {
-        sorted.push(...parentMap.get(root.name));
-      }
-    });
-
-    steps.value.forEach(step => {
-      if (step.dependsOn && !sorted.includes(step)) {
-        sorted.push(step);
-      }
-    });
-
-    return sorted.slice(0, 9);
+  const visibleActions = computed(() => {
+    if (navigationStack.value.length > 0) {
+      return subTasks.value;
+    }
+    return actions.value;
   });
 
-  function isDependent(step: any) {
-    if (step.dependsOn && !step.completed) {
-      const dependsOnStep = steps.value.find((s) => s.name === step.dependsOn);
-      if (dependsOnStep && !dependsOnStep.completed) {
+  function isDependent(action: any) {
+    if (action.main && !action.completed) {
+      const dependsOnAction = visibleActions.value.find((s) => s.name === action.main);
+      if (dependsOnAction && !dependsOnAction.completed) {
         return true;
       }
     }
     return false;
   }
 
-  function dependsOnTooltip(step: any) {
-    if (step.dependsOn && !step.completed) {
-      const dependsOnStep = steps.value.find((s) => s.name === step.dependsOn);
-      if (dependsOnStep && !dependsOnStep.completed) {
-        return `You need to complete "${dependsOnStep.title}" first.`;
+  function dependsOnTooltip(action: any) {
+    if (action.main && !action.completed) {
+      const dependsOnAction = visibleActions.value.find((s) => s.name === action.main);
+      if (dependsOnAction && !dependsOnAction.completed) {
+        return `You need to complete "${dependsOnAction.title}" first.`;
       }
     }
     return '';
   }
 
-  async function skip(stepName: string) {
-    const step = steps.value.find(s => s.name === stepName);
-    if (step) {
-      step.completed = true;
-      if (step.site) {
-        await updateTodoStatus(step.site, step.name, 'Closed');
+  async function skip(actionName: string) {
+    const action = visibleActions.value.find(s => s.name === actionName);
+    if (action) {
+      action.completed = true;
+      if (action.site) {
+        await updateTodoStatus(action.site, action.name, 'Cancelled');
+        await refreshCurrentView();
       }
     }
   }
 
-  async function reset(stepName: string) {
-    const step = steps.value.find(s => s.name === stepName);
-    if (step) {
-      step.completed = false;
-      if (step.site) {
-        await updateTodoStatus(step.site, step.name, 'Open');
+  async function close(actionName: string) {
+    const action = visibleActions.value.find(s => s.name === actionName);
+    if (action) {
+      action.completed = true;
+      if (action.site) {
+        await updateTodoStatus(action.site, action.name, 'Closed');
+        await refreshCurrentView();
       }
     }
   }
 
   async function skipAll() {
-    for (const step of steps.value) {
-      if (!step.completed) {
-        step.completed = true;
-        if (step.site) {
-          await updateTodoStatus(step.site, step.name, 'Closed');
+    for (const action of visibleActions.value) {
+      if (!action.completed) {
+        action.completed = true;
+        if (action.site) {
+          await updateTodoStatus(action.site, action.name, 'Cancelled');
         }
       }
+    }
+    await refreshCurrentView();
+  }
+
+  async function refreshCurrentView() {
+    if (navigationStack.value.length > 0) {
+      const currentParent = navigationStack.value[navigationStack.value.length - 1];
+      await fetchSubTodos(currentParent);
+    } else {
+      await fetchTodos();
     }
   }
 
-  async function resetAll() {
-    for (const step of steps.value) {
-      if (step.completed) {
-        step.completed = false;
-        if (step.site) {
-          await updateTodoStatus(step.site, step.name, 'Open');
-        }
-      }
+  async function fetchSubTodos(parentTodo: any) {
+    isLoading.value = true;
+    try {
+      const { fetchSubTodosFromSite } = await import('../services/api');
+      const rawSubTasks = await fetchSubTodosFromSite(parentTodo.site, parentTodo.name);
+      subTasks.value = rawSubTasks.map((todo: any) => mapTodoToAction(todo, parentTodo.site));
+    } catch (error) {
+      logger.error({ err: error }, "Error fetching sub todos");
+    } finally {
+      isLoading.value = false;
     }
-    isOnboardingStepsCompleted.value = false;
+  }
+
+  async function selectTodo(todo: any) {
+    if (todo.action) {
+      const actionData = await fetchActionGraph(todo.site, todo.action);
+      if (actionData && actionData.compiled_json) {
+        startAction(todo, JSON.parse(actionData.compiled_json));
+      }
+    } else {
+      navigationStack.value.push(todo);
+      await fetchSubTodos(todo);
+    }
+  }
+
+  async function goBack() {
+    navigationStack.value.pop();
+    if (navigationStack.value.length === 0) {
+      subTasks.value = [];
+      await fetchTodos();
+    } else {
+      const currentParent = navigationStack.value[navigationStack.value.length - 1];
+      await fetchSubTodos(currentParent);
+    }
+  }
+
+  function mapTodoToAction(todo: any, site: any) {
+    return {
+      name: todo.name,
+      title: todo.description || todo.name,
+      icon: markRaw(TaskIcon),
+      completed: todo.status === 'Closed' || todo.status === 'Cancelled',
+      main: todo.main,
+      action: todo.action,
+      site: site,
+      onClick: () => selectTodo({ ...todo, site })
+    };
   }
 
   async function fetchTodos() {
@@ -121,25 +161,15 @@ export function useTodos() {
       }
       
       hasAuthenticatedSites.value = true;
-      const allTodos = await fetchTodosFromSites(sites);
       
-      steps.value = allTodos.map((todo: any) => ({
-        name: todo.name,
-        title: todo.description || todo.name,
-        icon: markRaw(TaskIcon),
-        completed: todo.status === 'Closed',
-        dependsOn: todo.depends_on,
-        site: todo.site,
-        onClick: async () => {
-          logger.debug({ todoName: todo.name }, "Todo clicked");
-          if (todo.action) {
-            const actionData = await fetchActionGraph(todo.site, todo.action);
-            if (actionData && actionData.compiled_json) {
-              startAction(todo, JSON.parse(actionData.compiled_json));
-            }
-          }
-        }
-      }));
+      const { fetchReportFromSites, fetchOpenTodosFromSites } = await import('../services/api');
+      
+      const report = await fetchReportFromSites(sites);
+      reportData.value = { totalOpen: report.totalOpen, completedToday: report.completedToday };
+      
+      const allTodos = await fetchOpenTodosFromSites(sites);
+      actions.value = allTodos.map((todo: any) => mapTodoToAction(todo, todo.site));
+      
     } catch (error) {
       logger.error({ err: error }, "Error fetching sites or todos");
     } finally {
@@ -148,20 +178,24 @@ export function useTodos() {
   }
 
   return {
-    steps,
+    actions,
+    subTasks,
+    navigationStack,
+    reportData,
     isLoading,
     hasAuthenticatedSites,
     isOnboardingStepsCompleted,
-    totalSteps,
-    stepsCompleted,
+    totalActions,
+    actionsCompleted,
     completedPercentage,
-    visibleSteps,
+    visibleActions,
     isDependent,
     dependsOnTooltip,
     skip,
-    reset,
+    close,
     skipAll,
-    resetAll,
+    selectTodo,
+    goBack,
     fetchTodos
   };
 }

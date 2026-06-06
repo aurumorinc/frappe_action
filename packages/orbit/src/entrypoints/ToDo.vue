@@ -1,7 +1,8 @@
 <template>
   <div
     v-show="show"
-    class="orbit-panel onb-panel fixed z-50 right-0 w-80 h-[calc(100%_-_80px)] text-ink-gray-9 m-5 mt-[62px] p-3 flex gap-2 flex-col justify-between rounded-lg bg-surface-modal shadow-2xl"
+    class="orbit-root orbit-panel onb-panel fixed z-50 right-0 w-80 h-[calc(100%_-_80px)] text-ink-gray-9 m-5 mt-[62px] p-3 flex gap-2 flex-col justify-between rounded-lg bg-surface-modal shadow-2xl font-sans"
+    style="font-family: InterVar, ui-sans-serif, system-ui, sans-serif;"
     :class="{ 'top-[calc(100%_-_120px)] border': minimize }"
     @click.stop
   >
@@ -25,14 +26,105 @@
       </div>
     </div>
     <div class="h-full overflow-hidden flex flex-col">
-      <TodoSteps
-        v-if="!isOnboardingStepsCompleted && !showHelpCenter"
-        :title="title"
-        :logo="logo"
-      />
-      <div v-else-if="showHelpCenter" class="flex flex-col h-full overflow-hidden">
+      <div v-if="!isOnboardingStepsCompleted && !showSettings" class="flex flex-col h-full overflow-hidden">
+        <div class="flex flex-col justify-center items-center gap-1 mt-4 mb-7">
+          <component :is="logo" class="size-10 shrink-0 rounded mb-4" />
+          <div class="text-base font-medium">
+            {{ 'Welcome to ' + title }}
+          </div>
+          <div class="text-p-base font-normal">
+            {{ `${actionsCompleted}/${totalActions} todos completed` }}
+          </div>
+        </div>
+        <div class="flex flex-col gap-2.5 overflow-hidden">
+          <div v-if="hasAuthenticatedSites" class="flex justify-between items-center py-0.5">
+            <Badge
+              v-if="navigationStack.length > 0"
+              :label="`${completedPercentage}% completed`"
+              :theme="completedPercentage == 100 ? 'green' : 'orange'"
+              size="lg"
+            />
+            <div v-else></div>
+            <div class="flex">
+              <Button
+                v-if="navigationStack.length > 0"
+                variant="ghost"
+                :label="'Back'"
+                @click="goBack"
+              />
+              <Button
+                v-if="completedPercentage != 100 && navigationStack.length === 0"
+                variant="ghost"
+                :label="'Skip all'"
+                @click="skipAll"
+              />
+              <Button
+                v-if="completedPercentage != 100 && navigationStack.length > 0 && !currentActionHasAction"
+                variant="ghost"
+                :label="'Skip all'"
+                @click="skipAll"
+              />
+              <Button
+                v-if="navigationStack.length > 0 && currentActionHasAction"
+                variant="ghost"
+                :label="'Close'"
+                @click="() => close(navigationStack[navigationStack.length - 1].name)"
+              />
+            </div>
+          </div>
+          <div v-else class="text-center text-ink-gray-5 py-4">
+            No sites are connected. Please connect a site in Settings.
+          </div>
+          <div class="flex flex-col gap-1.5 overflow-y-auto">
+            <div
+              v-for="action in visibleActions"
+              :key="action.title"
+              class="group w-full flex gap-2 justify-between items-center hover:bg-surface-gray-1 rounded px-2 py-1.5 cursor-pointer"
+              @click.stop="
+                () => !action.completed && !isDependent(action) && action.onClick()
+              "
+            >
+              <component
+                :is="isDependent(action) ? Tooltip : 'div'"
+                :text="dependsOnTooltip(action)"
+              >
+                <div
+                  class="flex gap-2 items-center"
+                  :class="[
+                    action.completed
+                      ? 'text-ink-gray-5'
+                      : isDependent(action)
+                        ? 'text-ink-gray-4'
+                        : 'text-ink-gray-8',
+                  ]"
+                >
+                  <component :is="action.icon" class="h-4" />
+                  <div class="text-base" :class="{ 'line-through': action.completed }">
+                    {{ action.title }}
+                  </div>
+                </div>
+              </component>
+              <div class="flex gap-1">
+                <Button
+                  v-if="!action.completed && !isDependent(action)"
+                  :label="'Skip'"
+                  class="!h-4 text-xs !text-ink-gray-6 hidden group-hover:flex"
+                  @click.stop="() => skip(action.name)"
+                />
+                <Button
+                  v-if="!action.completed && !isDependent(action)"
+                  :label="'Close'"
+                  class="!h-4 text-xs !text-ink-gray-6 hidden group-hover:flex"
+                  @click.stop="() => close(action.name)"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="showSettings" class="flex flex-col h-full overflow-hidden">
         <div class="p-4 text-center text-ink-gray-5">
-          Help Center Content
+          Settings Content
         </div>
       </div>
     </div>
@@ -49,32 +141,58 @@
 </template>
 <script setup>
 import { ref, computed, markRaw, onMounted } from 'vue'
-import { Dropdown, Button, FeatherIcon } from 'frappe-ui'
+import { Dropdown, Button, FeatherIcon, Tooltip, Badge } from 'frappe-ui'
 
 import StepsIcon from '../icons/StepsIcon.vue'
 import MinimizeIcon from '../icons/MinimizeIcon.vue'
 import MaximizeIcon from '../icons/MaximizeIcon.vue'
 import HelpIcon from '../icons/HelpIcon.vue'
 import OrbitLogo from '../icons/OrbitLogo.vue'
-import TodoSteps from '../components/TodoSteps.vue'
 
 import { useTodos } from '../composables/useTodos'
 import logger from '../utils/logger'
 
 const show = ref(true)
 const minimize = ref(false)
-const showHelpCenter = ref(false)
+const showSettings = ref(false)
 
 const title = 'Frappe Orbit'
 const logo = markRaw(OrbitLogo)
 
-const { resetAll, isOnboardingStepsCompleted, fetchTodos } = useTodos()
+const {
+  actions,
+  subTasks,
+  navigationStack,
+  reportData,
+  isLoading,
+  hasAuthenticatedSites,
+  isOnboardingStepsCompleted,
+  totalActions,
+  actionsCompleted,
+  completedPercentage,
+  visibleActions,
+  isDependent,
+  dependsOnTooltip,
+  skip,
+  close,
+  skipAll,
+  selectTodo,
+  goBack,
+  fetchTodos
+} = useTodos()
+
+const currentActionHasAction = computed(() => {
+  if (navigationStack.value.length > 0) {
+    return !!navigationStack.value[navigationStack.value.length - 1].action;
+  }
+  return false;
+});
 
 const headingTitle = computed(() => {
-  if (!isOnboardingStepsCompleted.value && !showHelpCenter.value) {
-    return 'Getting started'
-  } else if (showHelpCenter.value) {
-    return 'Help center'
+  if (!isOnboardingStepsCompleted.value && !showSettings.value) {
+    return 'ToDo'
+  } else if (showSettings.value) {
+    return 'Settings'
   }
 })
 
@@ -84,7 +202,7 @@ const options = computed(() => {
       icon: StepsIcon,
       label: 'Reset todos',
       onClick: resetOnboardingSteps,
-      condition: () => showHelpCenter.value && isOnboardingStepsCompleted.value,
+      condition: () => showSettings.value && isOnboardingStepsCompleted.value,
     },
   ]
 
@@ -95,17 +213,17 @@ const footerItems = computed(() => {
   let items = [
     {
       icon: HelpIcon,
-      label: 'Help centre',
+      label: 'Settings',
       onClick: () => {
-        showHelpCenter.value = true
+        showSettings.value = true
       },
-      condition: !isOnboardingStepsCompleted.value && !showHelpCenter.value,
+      condition: !isOnboardingStepsCompleted.value && !showSettings.value,
     },
     {
       icon: StepsIcon,
       label: 'Todos',
-      onClick: () => (showHelpCenter.value = false),
-      condition: showHelpCenter.value && !isOnboardingStepsCompleted.value,
+      onClick: () => (showSettings.value = false),
+      condition: showSettings.value && !isOnboardingStepsCompleted.value,
     },
   ]
 
@@ -113,8 +231,8 @@ const footerItems = computed(() => {
 })
 
 function resetOnboardingSteps() {
-  resetAll()
-  showHelpCenter.value = false
+  // resetAll()
+  showSettings.value = false
 }
 
 onMounted(() => {

@@ -19,31 +19,92 @@ export async function updateTodoStatus(site: any, todoName: string, status: stri
   }
 }
 
-export async function fetchTodosFromSites(sites: any[]) {
-  let allTodos: any[] = [];
+export async function fetchReportFromSites(sites: any[]) {
+  let totalOpen = 0;
+  let completedToday = 0;
+  
   for (const site of sites) {
     try {
-      const response = await fetch(`${site.url}/api/resource/ToDo?fields=["name","description","status","depends_on","action"]&limit_page_length=20`, {
-        headers: {
-          'Authorization': `Bearer ${site.accessToken}`
+      const response = await fetch(`${site.url}/api/method/frappe_orbit.todo.get_report`, {
+        headers: { 'Authorization': `Bearer ${site.accessToken}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.message) {
+          totalOpen += data.message.total_open || 0;
+          completedToday += data.message.completed_today || 0;
         }
+      }
+    } catch (error) {
+      console.error(`Failed to fetch report from ${site.url}:`, error);
+    }
+  }
+  return { totalOpen, completedToday };
+}
+
+export async function fetchOpenTodosFromSites(sites: any[]) {
+  let allOpenTodos: any[] = [];
+  let allRecentClosed: any[] = [];
+  
+  for (const site of sites) {
+    try {
+      const response = await fetch(`${site.url}/api/method/frappe_orbit.todo.get_open?limit=9`, {
+        headers: { 'Authorization': `Bearer ${site.accessToken}` }
       });
       
       if (response.ok) {
         const data = await response.json();
-        if (data.data) {
-          const siteTodos = data.data.map((todo: any) => ({
-            ...todo,
-            site: site
-          }));
-          allTodos = [...allTodos, ...siteTodos];
+        if (data.message) {
+          if (data.message.open_todos) {
+            const siteOpenTodos = data.message.open_todos.map((todo: any) => ({ ...todo, site }));
+            allOpenTodos = [...allOpenTodos, ...siteOpenTodos];
+          }
+          if (data.message.recent_closed) {
+            const siteRecentClosed = data.message.recent_closed.map((todo: any) => ({ ...todo, site }));
+            allRecentClosed = [...allRecentClosed, ...siteRecentClosed];
+          }
         }
       }
     } catch (error) {
-      console.error(`Failed to fetch todos from ${site.url}:`, error);
+      console.error(`Failed to fetch open todos from ${site.url}:`, error);
     }
   }
-  return allTodos;
+  
+  // Sort open todos by priority desc, creation asc across all sites
+  allOpenTodos.sort((a, b) => {
+    const priorityOrder: Record<string, number> = { 'High': 3, 'Medium': 2, 'Low': 1 };
+    const pA = priorityOrder[a.priority] || 0;
+    const pB = priorityOrder[b.priority] || 0;
+    if (pA !== pB) return pB - pA;
+    return new Date(a.creation).getTime() - new Date(b.creation).getTime();
+  });
+  
+  // Sort recent closed by modified desc across all sites
+  allRecentClosed.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
+  
+  // Take top 9 open, and 1 most recent closed
+  const finalOpen = allOpenTodos.slice(0, 9);
+  const finalClosed = allRecentClosed.slice(0, 1);
+  
+  return [...finalOpen, ...finalClosed];
+}
+
+export async function fetchSubTodosFromSite(site: any, parentId: string) {
+  try {
+    const response = await fetch(`${site.url}/api/method/frappe_orbit.todo.get_sub?parent_id=${parentId}`, {
+      headers: { 'Authorization': `Bearer ${site.accessToken}` }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.message) {
+        return data.message.map((todo: any) => ({ ...todo, site }));
+      }
+    }
+    return [];
+  } catch (error) {
+    console.error(`Failed to fetch sub todos for ${parentId} from ${site.url}:`, error);
+    return [];
+  }
 }
 
 export async function fetchActionGraph(site: any, actionName: string) {
