@@ -53,27 +53,36 @@ class TestToDoAPI(UnitTestCase):
         """Test getting open and recently closed ToDos."""
         # Create 2 open ToDos
         for i in range(2):
-            frappe.get_doc({"doctype": "ToDo", "description": f"Open {i}", "allocated_to": "test_user_a@example.com", "status": "Open"}).insert(ignore_permissions=True)
+            frappe.get_doc({"doctype": "ToDo", "description": f"Open {i}", "allocated_to": "test_user_a@example.com", "status": "Open", "action": "_Test Action"}).insert(ignore_permissions=True)
         
         # Create 1 closed ToDo
-        frappe.get_doc({"doctype": "ToDo", "description": "Closed 1", "allocated_to": "test_user_a@example.com", "status": "Closed"}).insert(ignore_permissions=True)
+        frappe.get_doc({"doctype": "ToDo", "description": "Closed 1", "allocated_to": "test_user_a@example.com", "status": "Closed", "action": "_Test Action"}).insert(ignore_permissions=True)
 
         result = get_open()
         self.assertEqual(len(result["open_todos"]), 2)
         self.assertEqual(len(result["recent_closed"]), 1)
 
+    def test_get_open_filters_out_no_action(self):
+        """Test that get_open only returns ToDos with an action."""
+        frappe.get_doc({"doctype": "ToDo", "description": "With Action", "allocated_to": "test_user_a@example.com", "status": "Open", "action": "_Test Action"}).insert(ignore_permissions=True)
+        frappe.get_doc({"doctype": "ToDo", "description": "Without Action", "allocated_to": "test_user_a@example.com", "status": "Open"}).insert(ignore_permissions=True)
+
+        result = get_open()
+        self.assertEqual(len(result["open_todos"]), 1)
+        self.assertEqual(result["open_todos"][0].description, "With Action")
+
     def test_get_open_custom_limit(self):
         """Test getting open ToDos with a custom limit."""
         for i in range(5):
-            frappe.get_doc({"doctype": "ToDo", "description": f"Open {i}", "allocated_to": "test_user_a@example.com", "status": "Open"}).insert(ignore_permissions=True)
+            frappe.get_doc({"doctype": "ToDo", "description": f"Open {i}", "allocated_to": "test_user_a@example.com", "status": "Open", "action": "_Test Action"}).insert(ignore_permissions=True)
         
         result = get_open(limit=3)
         self.assertEqual(len(result["open_todos"]), 3)
 
     def test_get_open_isolation(self):
         """Test that get_open only returns ToDos for the current user."""
-        frappe.get_doc({"doctype": "ToDo", "description": "User A Open", "allocated_to": "test_user_a@example.com", "status": "Open"}).insert(ignore_permissions=True)
-        frappe.get_doc({"doctype": "ToDo", "description": "User B Open", "allocated_to": "test_user_b@example.com", "status": "Open"}).insert(ignore_permissions=True)
+        frappe.get_doc({"doctype": "ToDo", "description": "User A Open", "allocated_to": "test_user_a@example.com", "status": "Open", "action": "_Test Action"}).insert(ignore_permissions=True)
+        frappe.get_doc({"doctype": "ToDo", "description": "User B Open", "allocated_to": "test_user_b@example.com", "status": "Open", "action": "_Test Action"}).insert(ignore_permissions=True)
 
         result = get_open()
         self.assertEqual(len(result["open_todos"]), 1)
@@ -81,8 +90,8 @@ class TestToDoAPI(UnitTestCase):
 
     def test_get_report_happy_path(self):
         """Test getting the report counts."""
-        frappe.get_doc({"doctype": "ToDo", "description": "Open 1", "allocated_to": "test_user_a@example.com", "status": "Open"}).insert(ignore_permissions=True)
-        frappe.get_doc({"doctype": "ToDo", "description": "Closed 1", "allocated_to": "test_user_a@example.com", "status": "Closed"}).insert(ignore_permissions=True)
+        frappe.get_doc({"doctype": "ToDo", "description": "Open 1", "allocated_to": "test_user_a@example.com", "status": "Open", "action": "_Test Action"}).insert(ignore_permissions=True)
+        frappe.get_doc({"doctype": "ToDo", "description": "Closed 1", "allocated_to": "test_user_a@example.com", "status": "Closed", "action": "_Test Action"}).insert(ignore_permissions=True)
 
         result = get_report()
         self.assertEqual(result["total_open"], 1)
@@ -92,7 +101,7 @@ class TestToDoAPI(UnitTestCase):
         """Test that get_report only counts ToDos completed today."""
         # Create a ToDo closed yesterday
         yesterday = add_days(nowdate(), -1)
-        doc = frappe.get_doc({"doctype": "ToDo", "description": "Closed Yesterday", "allocated_to": "test_user_a@example.com", "status": "Closed"}).insert(ignore_permissions=True)
+        doc = frappe.get_doc({"doctype": "ToDo", "description": "Closed Yesterday", "allocated_to": "test_user_a@example.com", "status": "Closed", "action": "_Test Action"}).insert(ignore_permissions=True)
         # Manually update modified date to yesterday
         frappe.db.sql("update `tabToDo` set modified = %s where name = %s", (yesterday, doc.name))
 
@@ -101,16 +110,16 @@ class TestToDoAPI(UnitTestCase):
 
     def test_get_report_isolation(self):
         """Test that get_report only counts ToDos for the current user."""
-        frappe.get_doc({"doctype": "ToDo", "description": "User A Open", "allocated_to": "test_user_a@example.com", "status": "Open"}).insert(ignore_permissions=True)
-        frappe.get_doc({"doctype": "ToDo", "description": "User B Open", "allocated_to": "test_user_b@example.com", "status": "Open"}).insert(ignore_permissions=True)
+        frappe.get_doc({"doctype": "ToDo", "description": "User A Open", "allocated_to": "test_user_a@example.com", "status": "Open", "action": "_Test Action"}).insert(ignore_permissions=True)
+        frappe.get_doc({"doctype": "ToDo", "description": "User B Open", "allocated_to": "test_user_b@example.com", "status": "Open", "action": "_Test Action"}).insert(ignore_permissions=True)
 
         result = get_report()
         self.assertEqual(result["total_open"], 1)
 
     def test_get_sub_happy_path(self):
         """Test getting sub-todos for a parent."""
-        parent = frappe.get_doc({"doctype": "ToDo", "description": "Parent", "allocated_to": "test_user_a@example.com"}).insert(ignore_permissions=True)
-        frappe.get_doc({"doctype": "ToDo", "description": "Sub 1", "allocated_to": "test_user_a@example.com", "main": parent.name}).insert(ignore_permissions=True)
+        parent = frappe.get_doc({"doctype": "ToDo", "description": "Parent", "allocated_to": "test_user_a@example.com", "action": "_Test Action"}).insert(ignore_permissions=True)
+        frappe.get_doc({"doctype": "ToDo", "description": "Sub 1", "allocated_to": "test_user_a@example.com", "main": parent.name, "action": "_Test Action"}).insert(ignore_permissions=True)
         
         result = get_sub(parent.name)
         self.assertEqual(len(result), 1)
@@ -118,15 +127,15 @@ class TestToDoAPI(UnitTestCase):
 
     def test_get_sub_isolation(self):
         """Test that get_sub only returns sub-todos for the current user."""
-        parent = frappe.get_doc({"doctype": "ToDo", "description": "Parent", "allocated_to": "test_user_a@example.com"}).insert(ignore_permissions=True)
-        frappe.get_doc({"doctype": "ToDo", "description": "Sub User B", "allocated_to": "test_user_b@example.com", "main": parent.name}).insert(ignore_permissions=True)
+        parent = frappe.get_doc({"doctype": "ToDo", "description": "Parent", "allocated_to": "test_user_a@example.com", "action": "_Test Action"}).insert(ignore_permissions=True)
+        frappe.get_doc({"doctype": "ToDo", "description": "Sub User B", "allocated_to": "test_user_b@example.com", "main": parent.name, "action": "_Test Action"}).insert(ignore_permissions=True)
         
         result = get_sub(parent.name)
         self.assertEqual(len(result), 0)
 
     def test_save_happy_path(self):
         """Test saving a ToDo."""
-        todo = frappe.get_doc({"doctype": "ToDo", "description": "To Update", "allocated_to": "test_user_a@example.com"}).insert(ignore_permissions=True)
+        todo = frappe.get_doc({"doctype": "ToDo", "description": "To Update", "allocated_to": "test_user_a@example.com", "action": "_Test Action"}).insert(ignore_permissions=True)
         
         updated_doc = {"name": todo.name, "description": "Updated"}
         result = save(updated_doc)
@@ -141,7 +150,7 @@ class TestToDoAPI(UnitTestCase):
     def test_save_permission_error(self):
         """Test saving a ToDo allocated to another user throws PermissionError."""
         frappe.set_user("test_user_b@example.com")
-        todo = frappe.get_doc({"doctype": "ToDo", "description": "User B ToDo", "allocated_to": "test_user_b@example.com"}).insert(ignore_permissions=True)
+        todo = frappe.get_doc({"doctype": "ToDo", "description": "User B ToDo", "allocated_to": "test_user_b@example.com", "action": "_Test Action"}).insert(ignore_permissions=True)
         
         frappe.set_user("test_user_a@example.com")
         with self.assertRaises(frappe.PermissionError):
@@ -149,7 +158,7 @@ class TestToDoAPI(UnitTestCase):
 
     def test_save_admin_override(self):
         """Test Administrator can save any ToDo."""
-        todo = frappe.get_doc({"doctype": "ToDo", "description": "User A ToDo", "allocated_to": "test_user_a@example.com"}).insert(ignore_permissions=True)
+        todo = frappe.get_doc({"doctype": "ToDo", "description": "User A ToDo", "allocated_to": "test_user_a@example.com", "action": "_Test Action"}).insert(ignore_permissions=True)
         
         frappe.set_user("Administrator")
         result = save({"name": todo.name, "description": "Admin Updated"})
@@ -157,7 +166,7 @@ class TestToDoAPI(UnitTestCase):
 
     def test_trigger_sub_happy_path(self):
         """Test triggering a sub-todo."""
-        parent = frappe.get_doc({"doctype": "ToDo", "description": "Parent", "allocated_to": "test_user_a@example.com"}).insert(ignore_permissions=True)
+        parent = frappe.get_doc({"doctype": "ToDo", "description": "Parent", "allocated_to": "test_user_a@example.com", "action": "_Test Action"}).insert(ignore_permissions=True)
         
         result = trigger_sub(parent.name, "_Test Action")
         self.assertEqual(result["status"], "success")
@@ -169,14 +178,14 @@ class TestToDoAPI(UnitTestCase):
 
     def test_trigger_sub_action_not_found(self):
         """Test triggering a sub-todo with invalid action."""
-        parent = frappe.get_doc({"doctype": "ToDo", "description": "Parent", "allocated_to": "test_user_a@example.com"}).insert(ignore_permissions=True)
+        parent = frappe.get_doc({"doctype": "ToDo", "description": "Parent", "allocated_to": "test_user_a@example.com", "action": "_Test Action"}).insert(ignore_permissions=True)
         
         with self.assertRaises(frappe.ValidationError):
             trigger_sub(parent.name, "Invalid Action")
 
     def test_trigger_sub_idor_vulnerability(self):
         """
-        Test potential IDOR vulnerability where a user can create a sub-todo 
+        Test potential IDOR vulnerability where a user can create a sub-todo
         for a parent ToDo they don't own.
         Currently, the code does NOT check this, so this test might pass even if it shouldn't,
         or we can write it to expect the current behavior and flag it.
@@ -184,7 +193,7 @@ class TestToDoAPI(UnitTestCase):
         highlighting the need for a fix.
         """
         frappe.set_user("test_user_b@example.com")
-        parent_b = frappe.get_doc({"doctype": "ToDo", "description": "Parent B", "allocated_to": "test_user_b@example.com"}).insert(ignore_permissions=True)
+        parent_b = frappe.get_doc({"doctype": "ToDo", "description": "Parent B", "allocated_to": "test_user_b@example.com", "action": "_Test Action"}).insert(ignore_permissions=True)
         
         frappe.set_user("test_user_a@example.com")
         
