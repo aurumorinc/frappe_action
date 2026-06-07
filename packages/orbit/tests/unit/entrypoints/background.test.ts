@@ -19,7 +19,8 @@ vi.mock('../../../src/services/engine', () => {
 
 vi.mock('../../../src/services/auth', () => ({
   saveSite: vi.fn(),
-  getActiveSite: vi.fn()
+  getActiveSite: vi.fn(),
+  getSites: vi.fn()
 }));
 
 describe('background', () => {
@@ -41,8 +42,8 @@ describe('background', () => {
     // Mock launchWebAuthFlow
     fakeBrowser.identity.launchWebAuthFlow = vi.fn().mockImplementation((options, callback) => {
       // Ensure lastError is undefined
-      if (global.chrome && global.chrome.runtime) {
-        delete (global.chrome.runtime as any).lastError;
+      if ((global as any).chrome && (global as any).chrome.runtime) {
+        delete ((global as any).chrome.runtime as any).lastError;
       }
       callback('https://extension.chromiumapp.org/?code=mock_auth_code');
     });
@@ -83,6 +84,60 @@ describe('background', () => {
       accessToken: 'mock_access_token',
       isActive: true
     }));
+  });
+
+  it('should handle CHECK_AUTH_STATUS and return true when authorized', async () => {
+    vi.spyOn(authStorage, 'getSites').mockResolvedValue([{
+      url: 'https://example.com',
+      accessToken: 'mock_token',
+      refreshToken: 'mock_refresh',
+      clientId: 'client123',
+      id: 'site1',
+      isActive: true,
+      expiresAt: Date.now() + 3600000
+    }]);
+
+    const mockListener = vi.fn();
+    fakeBrowser.runtime.onMessage.addListener = vi.fn((fn) => {
+      mockListener.mockImplementation(fn);
+    });
+
+    vi.resetModules();
+    const bg = await import('../../../src/entrypoints/background');
+    bg.default.main();
+
+    const response = await new Promise((resolve) => {
+      mockListener(
+        { type: 'CHECK_AUTH_STATUS', payload: { siteUrl: 'https://example.com' } },
+        {},
+        resolve
+      );
+    });
+
+    expect(response).toEqual({ isAuthorized: true });
+  });
+
+  it('should handle CHECK_AUTH_STATUS and return false when unauthorized', async () => {
+    vi.spyOn(authStorage, 'getSites').mockResolvedValue([]);
+
+    const mockListener = vi.fn();
+    fakeBrowser.runtime.onMessage.addListener = vi.fn((fn) => {
+      mockListener.mockImplementation(fn);
+    });
+
+    vi.resetModules();
+    const bg = await import('../../../src/entrypoints/background');
+    bg.default.main();
+
+    const response = await new Promise((resolve) => {
+      mockListener(
+        { type: 'CHECK_AUTH_STATUS', payload: { siteUrl: 'https://example.com' } },
+        {},
+        resolve
+      );
+    });
+
+    expect(response).toEqual({ isAuthorized: false });
   });
 
   it('should handle START_ACTION and submit full ToDo doc', async () => {
