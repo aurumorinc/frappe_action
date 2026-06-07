@@ -126,6 +126,7 @@ export default defineBackground(() => {
                 'Authorization': `Bearer ${site.accessToken}`,
                 'Content-Type': 'application/json'
               },
+              credentials: 'omit',
               body: JSON.stringify({
                 doc: {
                   ...currentTodo,
@@ -158,9 +159,10 @@ export default defineBackground(() => {
               'Authorization': `Bearer ${site.accessToken}`,
               'Content-Type': 'application/json'
             },
+            credentials: 'omit',
             body: JSON.stringify({
               description: node.data.message || `Sub-task for node ${node.id}`,
-              depends_on: currentTodo.name,
+              main: currentTodo.name,
               status: 'Open'
             })
           });

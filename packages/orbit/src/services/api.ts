@@ -6,6 +6,7 @@ export async function updateTodoStatus(site: any, todoName: string, status: stri
         'Authorization': `Bearer ${site.accessToken}`,
         'Content-Type': 'application/json'
       },
+      credentials: 'omit',
       body: JSON.stringify({ status })
     });
     if (!response.ok) {
@@ -26,7 +27,8 @@ export async function fetchReportFromSites(sites: any[]) {
   for (const site of sites) {
     try {
       const response = await fetch(`${site.url}/api/method/frappe_orbit.todo.get_report`, {
-        headers: { 'Authorization': `Bearer ${site.accessToken}` }
+        headers: { 'Authorization': `Bearer ${site.accessToken}` },
+        credentials: 'omit'
       });
       if (response.ok) {
         const data = await response.json();
@@ -49,7 +51,8 @@ export async function fetchOpenTodosFromSites(sites: any[]) {
   for (const site of sites) {
     try {
       const response = await fetch(`${site.url}/api/method/frappe_orbit.todo.get_open?limit=9`, {
-        headers: { 'Authorization': `Bearer ${site.accessToken}` }
+        headers: { 'Authorization': `Bearer ${site.accessToken}` },
+        credentials: 'omit'
       });
       
       if (response.ok) {
@@ -92,7 +95,8 @@ export async function fetchOpenTodosFromSites(sites: any[]) {
 export async function fetchSubTodosFromSite(site: any, parentId: string) {
   try {
     const response = await fetch(`${site.url}/api/method/frappe_orbit.todo.get_sub?parent_id=${parentId}`, {
-      headers: { 'Authorization': `Bearer ${site.accessToken}` }
+      headers: { 'Authorization': `Bearer ${site.accessToken}` },
+      credentials: 'omit'
     });
     if (response.ok) {
       const data = await response.json();
@@ -110,7 +114,8 @@ export async function fetchSubTodosFromSite(site: any, parentId: string) {
 export async function fetchActionGraph(site: any, actionName: string) {
   try {
     const response = await fetch(`${site.url}/api/method/frappe_orbit.action.get?name=${actionName}`, {
-      headers: { 'Authorization': `Bearer ${site.accessToken}` }
+      headers: { 'Authorization': `Bearer ${site.accessToken}` },
+      credentials: 'omit'
     });
     if (response.ok) {
       const data = await response.json();
