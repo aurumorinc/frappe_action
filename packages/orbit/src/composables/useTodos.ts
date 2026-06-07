@@ -138,9 +138,19 @@ export function useTodos() {
   }
 
   function mapTodoToAction(todo: any, site: any) {
+    let title = todo.name;
+    if (todo.description) {
+      try {
+        const doc = new DOMParser().parseFromString(todo.description, 'text/html');
+        title = doc.body.textContent || doc.body.innerText || todo.name;
+      } catch (e) {
+        title = todo.description.replace(/<[^>]*>?/gm, '') || todo.name;
+      }
+    }
+    
     return {
       name: todo.name,
-      title: todo.description || todo.name,
+      title: title,
       icon: markRaw(TaskIcon),
       completed: todo.status === 'Closed' || todo.status === 'Cancelled',
       main: todo.main,

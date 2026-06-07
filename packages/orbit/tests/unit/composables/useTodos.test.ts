@@ -67,4 +67,24 @@ describe('useTodos.ts', () => {
     expect(actions.value[0].completed).toBe(true);
     expect(apiService.updateTodoStatus).toHaveBeenCalledWith({}, 'todo1', 'Cancelled');
   });
+
+  it('test_mapTodoToAction_strips_html', async () => {
+    const mockSites = [{ url: 'http://test', accessToken: 'token' }];
+    vi.mocked(authService.getSites).mockResolvedValueOnce(mockSites as any);
+    
+    const mockReport = { totalOpen: 1, completedToday: 0 };
+    vi.mocked(apiService.fetchReportFromSites).mockResolvedValueOnce(mockReport);
+
+    const mockTodos = [
+      { name: 'todo1', description: '<div class="ql-editor"><p>Go to linkedin</p></div>', status: 'Open' }
+    ];
+    vi.mocked(apiService.fetchOpenTodosFromSites).mockResolvedValueOnce(mockTodos);
+    
+    const { fetchTodos, actions } = useTodos();
+    
+    await fetchTodos();
+    
+    expect(actions.value).toHaveLength(1);
+    expect(actions.value[0].title).toBe('Go to linkedin');
+  });
 });
