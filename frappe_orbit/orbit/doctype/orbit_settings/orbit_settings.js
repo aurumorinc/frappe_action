@@ -51,7 +51,26 @@ frappe.ui.form.on('Orbit Settings', {
         frappe.call({
             method: 'frappe_orbit.orbit.doctype.orbit_settings.orbit_settings.get_authorization_status',
             callback: function(r) {
-                update_auth_status_ui(frm, r.message);
+                if (r.message) {
+                    // Backend says authorized, let's verify with extension
+                    window.postMessage({
+                        type: "ORBIT_CHECK_AUTH_STATUS",
+                        payload: { siteUrl: window.location.origin }
+                    }, "*");
+                    
+                    // Set a timeout in case extension is not installed
+                    window._orbitCheckAuthTimeout = setTimeout(() => {
+                        // If extension doesn't respond, assume it's not authorized locally
+                        frappe.call({
+                            method: 'frappe_orbit.orbit.doctype.orbit_settings.orbit_settings.deauthorize',
+                            callback: function() {
+                                update_auth_status_ui(frm, false);
+                            }
+                        });
+                    }, 2000);
+                } else {
+                    update_auth_status_ui(frm, false);
+                }
             }
         });
     }
@@ -60,7 +79,25 @@ frappe.ui.form.on('Orbit Settings', {
 if (!window._orbitMessageListenerAdded) {
     window._orbitMessageListenerAdded = true;
     window.addEventListener('message', function(event) {
-        if (event.data && event.data.type === 'ORBIT_REDIRECT_URI') {
+        if (event.data && event.data.type === 'ORBIT_AUTH_STATUS_RESULT') {
+            if (window._orbitCheckAuthTimeout) clearTimeout(window._orbitCheckAuthTimeout);
+            
+            if (event.data.payload && event.data.payload.isAuthorized) {
+                if (cur_frm && cur_frm.doctype === 'Orbit Settings') {
+                    update_auth_status_ui(cur_frm, true);
+                }
+            } else {
+                // Extension is not authorized, but backend was. Sync state.
+                frappe.call({
+                    method: 'frappe_orbit.orbit.doctype.orbit_settings.orbit_settings.deauthorize',
+                    callback: function() {
+                        if (cur_frm && cur_frm.doctype === 'Orbit Settings') {
+                            update_auth_status_ui(cur_frm, false);
+                        }
+                    }
+                });
+            }
+        } else if (event.data && event.data.type === 'ORBIT_REDIRECT_URI') {
         let redirect_uri = event.data.payload.redirect_uri;
         frappe.call({
             method: 'frappe_orbit.orbit.doctype.orbit_settings.orbit_settings.get_or_create_oauth_client',
