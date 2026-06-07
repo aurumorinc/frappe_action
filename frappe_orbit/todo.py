@@ -12,7 +12,8 @@ def get_open(limit=9):
         filters={
             "allocated_to": user,
             "status": "Open",
-            "main": ["in", ["", None]]
+            "main": ["in", ["", None]],
+            "action": ["is", "set"]
         },
         fields=["*"],
         order_by="priority desc, creation asc",
@@ -25,7 +26,8 @@ def get_open(limit=9):
         filters={
             "allocated_to": user,
             "status": ["in", ["Closed", "Cancelled"]],
-            "main": ["in", ["", None]]
+            "main": ["in", ["", None]],
+            "action": ["is", "set"]
         },
         fields=["*"],
         order_by="modified desc",

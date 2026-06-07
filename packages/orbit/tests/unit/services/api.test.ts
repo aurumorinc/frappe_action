@@ -16,6 +16,28 @@ describe('api.ts', () => {
     }));
   });
 
+  it('test_fetch_calls_omit_credentials', async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({ message: {} }) } as Response);
+    const site = { url: 'http://test', accessToken: 'token' };
+    
+    await updateTodoStatus(site, 'todo1', 'Closed');
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ credentials: 'omit' }));
+    
+    const { fetchReportFromSites, fetchSubTodosFromSite } = await import('../../../src/services/api');
+    
+    await fetchReportFromSites([site]);
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ credentials: 'omit' }));
+    
+    await fetchOpenTodosFromSites([site]);
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ credentials: 'omit' }));
+    
+    await fetchSubTodosFromSite(site, 'parent1');
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ credentials: 'omit' }));
+    
+    await fetchActionGraph(site, 'action1');
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ credentials: 'omit' }));
+  });
+
   it('updateTodoStatus returns false on failure', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({ ok: false } as Response);
     const result = await updateTodoStatus({ url: 'http://test', accessToken: 'token' }, 'todo1', 'Closed');
