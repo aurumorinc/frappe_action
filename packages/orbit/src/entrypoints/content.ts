@@ -94,6 +94,16 @@ export default defineContentScript({
             window.postMessage({ type: "ORBIT_AUTH_FAILED", error: response?.error }, "*");
           }
         });
+      } else if (event.data && event.data.type === "ORBIT_CHECK_AUTH_STATUS") {
+        browser.runtime.sendMessage({
+          type: "CHECK_AUTH_STATUS",
+          payload: event.data.payload
+        }, (response) => {
+          window.postMessage({
+            type: "ORBIT_AUTH_STATUS_RESULT",
+            payload: response
+          }, "*");
+        });
       }
     });
 

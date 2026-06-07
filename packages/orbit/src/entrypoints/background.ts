@@ -1,7 +1,7 @@
 import { defineBackground } from '#imports';
 import { Engine, ActionGraph } from "../services/engine";
 import { networkObserver } from "../utils/network_observer";
-import { saveSite, getActiveSite } from "../services/auth";
+import { saveSite, getActiveSite, getSites } from "../services/auth";
 import logger from "../utils/logger";
 
 export default defineBackground(() => {
@@ -88,6 +88,13 @@ export default defineBackground(() => {
         }
       );
       return true; // Keep message channel open for async response
+    } else if (message.type === "CHECK_AUTH_STATUS") {
+      const { siteUrl } = message.payload;
+      getSites().then(sites => {
+        const site = sites.find(s => s.url === siteUrl && s.accessToken);
+        sendResponse({ isAuthorized: !!site });
+      });
+      return true;
     } else if (message.type === "START_ACTION") {
       const graph: ActionGraph = message.payload.compiled_json;
       currentTodo = message.payload.todo;
