@@ -1,8 +1,8 @@
 import frappe
-from frappe.tests import IntegrationTestCase
+from frappe.tests import UnitTestCase
 from frappe_orbit.orbit.doctype.orbit_settings.orbit_settings import get_or_create_oauth_client
 
-class TestOAuthAuthorization(IntegrationTestCase):
+class TestOAuthAuthorization(UnitTestCase):
     def tearDown(self):
         # Clean up OAuth Client
         client_name = "Orbit"
