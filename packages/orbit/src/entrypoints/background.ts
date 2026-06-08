@@ -1,5 +1,5 @@
 import { defineBackground } from '#imports';
-import { Engine, ActionGraph } from "../services/engine";
+import { Engine, ActionGraph } from "../services/action";
 import { networkObserver } from "../utils/network_observer";
 import { saveSite, getActiveSite, getSites } from "../services/auth";
 import baseLogger, { processTelemetry } from "../utils/logger";
@@ -15,10 +15,10 @@ export default defineBackground(() => {
   browser.action.onClicked.addListener((tab) => {
     logger.debug({ tabId: tab.id }, "Action clicked");
     if (tab.id) {
-      browser.tabs.sendMessage(tab.id, { type: "TOGGLE_ORBIT_UI" }).then(() => {
-        logger.debug({ tabId: tab.id }, "Successfully sent TOGGLE_ORBIT_UI");
+      browser.tabs.sendMessage(tab.id, { type: "TOGGLE_UI" }).then(() => {
+        logger.debug({ tabId: tab.id }, "Successfully sent TOGGLE_UI");
       }).catch((err) => {
-        logger.warn({ tabId: tab.id, err }, "Failed to send TOGGLE_ORBIT_UI (content script likely not injected)");
+        logger.warn({ tabId: tab.id, err }, "Failed to send TOGGLE_UI (content script likely not injected)");
       });
     }
   });

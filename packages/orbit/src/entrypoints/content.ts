@@ -26,8 +26,8 @@ export default defineContentScript({
             });
           }
         });
-      } else if (message.type === "TOGGLE_ORBIT_UI") {
-        logger.debug("Received TOGGLE_ORBIT_UI message");
+      } else if (message.type === "TOGGLE_UI") {
+        logger.debug("Received TOGGLE_UI message");
         if (ui) {
           if (!isMounted) {
             logger.debug("Mounting UI...");
