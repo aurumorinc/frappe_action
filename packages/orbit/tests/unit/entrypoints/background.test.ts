@@ -1,6 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import * as authStorage from '../../../src/services/auth';
+import * as api from '../../../src/services/api';
+import { processTelemetry } from '../../../src/utils/logger';
+
+vi.mock('../../../src/utils/logger', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    processTelemetry: vi.fn()
+  };
+});
+
+vi.mock('../../../src/services/api', () => ({
+  fetchSentryConfig: vi.fn().mockResolvedValue(null),
+  fetchPosthogConfig: vi.fn().mockResolvedValue(null)
+}));
 
 vi.mock('wxt/browser', () => ({
   browser: fakeBrowser
@@ -84,6 +99,29 @@ describe('background', () => {
       accessToken: 'mock_access_token',
       isActive: true
     }));
+    
+    // Verify fetchSentryConfig and fetchPosthogConfig were called
+    expect(api.fetchSentryConfig).toHaveBeenCalled();
+    expect(api.fetchPosthogConfig).toHaveBeenCalled();
+  });
+
+  it('should handle LOG_TRANSMIT and call processTelemetry', async () => {
+    const mockListener = vi.fn();
+    fakeBrowser.runtime.onMessage.addListener = vi.fn((fn) => {
+      mockListener.mockImplementation(fn);
+    });
+
+    vi.resetModules();
+    const bg = await import('../../../src/entrypoints/background');
+    bg.default.main();
+
+    mockListener(
+      { type: 'LOG_TRANSMIT', payload: { level: 30, logEvent: { msg: 'test' } } },
+      {},
+      vi.fn()
+    );
+
+    expect(processTelemetry).toHaveBeenCalledWith(30, { msg: 'test' });
   });
 
   it('should handle CHECK_AUTH_STATUS and return true when authorized', async () => {
@@ -166,7 +204,7 @@ describe('background', () => {
     const bg = await import('../../../src/entrypoints/background');
     bg.default.main();
 
-    const mockTodo = { name: 'TODO-123', description: 'Test', status: 'Open' };
+    const mockTodo = { name: 'TODO-123', description: 'Test', status: 'Open', traceparent: '00-12345678901234567890123456789012-1234567890123456-01' };
     const mockGraph = { nodes: [], edges: [] };
 
     // Send START_ACTION
@@ -186,6 +224,9 @@ describe('background', () => {
       'https://example.com/api/method/frappe_orbit.todo.submit',
       expect.objectContaining({
         method: 'POST',
+        headers: expect.objectContaining({
+          'traceparent': '00-12345678901234567890123456789012-1234567890123456-01'
+        }),
         body: expect.stringContaining('"name":"TODO-123"')
       })
     );

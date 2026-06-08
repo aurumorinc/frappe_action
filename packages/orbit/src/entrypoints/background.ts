@@ -2,25 +2,32 @@ import { defineBackground } from '#imports';
 import { Engine, ActionGraph } from "../services/engine";
 import { networkObserver } from "../utils/network_observer";
 import { saveSite, getActiveSite, getSites } from "../services/auth";
-import logger from "../utils/logger";
+import logger, { processTelemetry } from "../utils/logger";
+import { SentryManager } from "../lib/sentry";
+import { PostHogManager } from "../lib/posthog";
+import { fetchSentryConfig, fetchPosthogConfig } from "../services/api";
 
 export default defineBackground(() => {
+  const bgLogger = logger.child({ context: 'background' });
   let currentEngine: Engine | null = null;
   let currentTodo: any = null;
 
   browser.action.onClicked.addListener((tab) => {
-    logger.debug({ tabId: tab.id }, "Action clicked");
+    bgLogger.debug({ tabId: tab.id }, "Action clicked");
     if (tab.id) {
       browser.tabs.sendMessage(tab.id, { type: "TOGGLE_ORBIT_UI" }).then(() => {
-        logger.debug({ tabId: tab.id }, "Successfully sent TOGGLE_ORBIT_UI");
+        bgLogger.debug({ tabId: tab.id }, "Successfully sent TOGGLE_ORBIT_UI");
       }).catch((err) => {
-        logger.warn({ tabId: tab.id, err }, "Failed to send TOGGLE_ORBIT_UI (content script likely not injected)");
+        bgLogger.warn({ tabId: tab.id, err }, "Failed to send TOGGLE_ORBIT_UI (content script likely not injected)");
       });
     }
   });
 
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === "GET_REDIRECT_URI") {
+    if (message.type === "LOG_TRANSMIT") {
+      processTelemetry(message.payload.level, message.payload.logEvent);
+      return true;
+    } else if (message.type === "GET_REDIRECT_URI") {
       sendResponse({ redirect_uri: browser.identity.getRedirectURL() });
       return true;
     } else if (message.type === "START_OAUTH_FLOW") {
@@ -66,7 +73,7 @@ export default defineBackground(() => {
               const tokenData = await tokenResponse.json();
 
               if (tokenData.access_token) {
-                await saveSite({
+                const newSite = {
                   id: Math.random().toString(36).substring(2) + Date.now().toString(36),
                   url: siteUrl,
                   clientId: clientId,
@@ -74,7 +81,26 @@ export default defineBackground(() => {
                   refreshToken: tokenData.refresh_token,
                   expiresAt: Date.now() + (tokenData.expires_in * 1000),
                   isActive: true
+                };
+                await saveSite(newSite);
+                
+                // Fetch and initialize telemetry config for the new site
+                fetchSentryConfig(newSite).then(config => {
+                  if (config && config.dsn) {
+                    SentryManager.registerSiteConfig(siteUrl, config.dsn);
+                  }
+                }).catch(err => {
+                  bgLogger.error({ err, siteUrl }, "Failed to initialize Sentry config");
                 });
+
+                fetchPosthogConfig(newSite).then(config => {
+                  if (config && config.api_key && config.host) {
+                    PostHogManager.registerSiteConfig(siteUrl, config.api_key, config.host);
+                  }
+                }).catch(err => {
+                  bgLogger.error({ err, siteUrl }, "Failed to initialize PostHog config");
+                });
+
                 sendResponse({ success: true });
               } else {
                 sendResponse({ success: false, error: "Failed to get access token" });
@@ -100,6 +126,8 @@ export default defineBackground(() => {
       currentTodo = message.payload.todo;
       currentEngine = new Engine(graph);
       
+      bgLogger.info({ eventName: 'action_started', siteUrl: currentTodo?.site?.url, todoName: currentTodo?.name }, "Action started");
+      
       processNextNode();
       sendResponse({ status: "started" });
     } else if (message.type === "DOM_OBSERVER_RESULT") {
@@ -122,16 +150,18 @@ export default defineBackground(() => {
     const node = currentEngine.getCurrentNode();
     if (!node) {
       // Action complete
-      logger.info({ scrapedData: currentEngine.scrapedData }, "Action complete");
+      bgLogger.info({ eventName: 'action_completed', siteUrl: currentTodo?.site?.url, todoName: currentTodo?.name, scrapedData: currentEngine.scrapedData }, "Action complete");
       if (currentTodo) {
         const site = await getActiveSite();
         if (site) {
           try {
+            const traceparent = currentTodo.traceparent;
             await fetch(`${site.url}/api/method/frappe_orbit.todo.submit`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${site.accessToken}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...(traceparent ? { 'traceparent': traceparent } : {})
               },
               credentials: 'omit',
               body: JSON.stringify({
@@ -143,7 +173,7 @@ export default defineBackground(() => {
               })
             });
           } catch (e) {
-            logger.error({ err: e }, "Failed to submit task data");
+            bgLogger.error({ err: e, siteUrl: site.url }, "Failed to submit task data");
           }
         }
       }
@@ -160,11 +190,13 @@ export default defineBackground(() => {
           // Wait, trigger_sub_task requires template_name. Let's just create a ToDo directly for simplicity if template is missing
           // Actually, let's just call a new API or use the existing one with a dummy template
           // For now, let's just create a ToDo via standard REST API
+          const traceparent = currentTodo.traceparent;
           const response = await fetch(`${site.url}/api/resource/ToDo`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${site.accessToken}`,
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              ...(traceparent ? { 'traceparent': traceparent } : {})
             },
             credentials: 'omit',
             body: JSON.stringify({
@@ -177,7 +209,7 @@ export default defineBackground(() => {
           // We should wait for this ToDo to be closed, but for now we just create it
           // In a real implementation, we'd poll or wait for a message from the UI
         } catch (e) {
-          logger.error({ err: e }, "Failed to create sub-task");
+          bgLogger.error({ err: e, siteUrl: site.url }, "Failed to create sub-task");
         }
       }
     }
