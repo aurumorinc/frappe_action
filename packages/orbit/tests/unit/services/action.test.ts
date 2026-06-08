@@ -1,13 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Engine, ActionGraph } from '../../../src/services/action';
 
+vi.mock('../../../src/nodes', () => ({
+  executeNode: vi.fn().mockResolvedValue({ success: true, value: {} })
+}));
+
 describe('Engine', () => {
-  it('should traverse linear graph and aggregate data', () => {
+  it('should traverse linear graph and aggregate data', async () => {
     const graph: ActionGraph = {
       nodes: [
         { id: '1', type: 'trigger', data: {} },
-        { id: '2', type: 'get-text', data: { target_selector: '#email', extract_target: 'innerText', data_key: 'email' } },
-        { id: '3', type: 'network-request', data: {} }
+        { id: '2', type: 'nodes:get-text', data: { target_selector: '#email', extract_target: 'innerText', data_key: 'email' } },
+        { id: '3', type: 'nodes:element-exists', data: {} }
       ],
       edges: [
         { id: 'e1', source: '1', target: '2' },
@@ -21,20 +25,20 @@ describe('Engine', () => {
     expect(engine.getCurrentNode()?.id).toBe('1');
     
     // Advance past trigger
-    engine.advance();
+    await engine.advance();
     expect(engine.getCurrentNode()?.id).toBe('2');
     
     // Advance past get-text with data
-    engine.advance({ email: 'user@domain.com' });
+    await engine.advance({ email: 'user@domain.com' });
     expect(engine.getCurrentNode()?.id).toBe('3');
     expect(engine.scrapedData).toEqual({ email: 'user@domain.com' });
   });
 
-  it('should evaluate conditions and branch correctly', () => {
+  it('should evaluate conditions and branch correctly', async () => {
     const graph: ActionGraph = {
       nodes: [
         { id: '1', type: 'trigger', data: {} },
-        { id: '2', type: 'manual-step', data: {} },
+        { id: '2', type: 'hitl', data: {} },
         { id: '3', type: 'sub-task', data: {} }
       ],
       edges: [
@@ -49,7 +53,7 @@ describe('Engine', () => {
     expect(engine.getCurrentNode()?.id).toBe('1');
     
     // Advance with data that satisfies path_a
-    engine.advance({ invoice_total: 500 });
+    await engine.advance({ invoice_total: 500 });
     expect(engine.getCurrentNode()?.id).toBe('2');
   });
 

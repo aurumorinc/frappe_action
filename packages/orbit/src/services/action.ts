@@ -1,19 +1,5 @@
-import { RPA_NodeType } from '../models/nodes';
+import { NodeType } from '../models/nodes';
 import { executeNode } from '../nodes';
-
-export type NodeType =
-  | 'trigger'
-  | 'element-exists'
-  | 'get-text'
-  | 'loop-elements'
-  | 'loop-breakpoint'
-  | 'network-request'
-  | 'guide-user'
-  | 'sub-task'
-  | 'manual-step'
-  | 'redirect'
-  | 'element-clicked'
-  | RPA_NodeType;
 
 export interface ActionNode {
   id: string;
