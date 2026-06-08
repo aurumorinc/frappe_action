@@ -16,6 +16,9 @@ export default defineConfig({
   srcDir: 'src',
   manifest: {
     permissions: ['storage', 'identity'],
+    host_permissions: [
+      '<all_urls>'
+    ],
     name: 'Orbit',
     description: 'An intelligent browser co-pilot that seamlessly integrates with your Frappe instances to automate workflows and extract data.',
     version: '16.0.1',
