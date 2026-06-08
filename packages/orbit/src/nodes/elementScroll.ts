@@ -13,28 +13,37 @@ export default async function elementScroll(data: ElementScrollNodeData, id: str
 
     const scrollY = data.scrollY || 0;
     const scrollX = data.scrollX || 0;
-    const behavior = data.smooth ? 'smooth' : 'auto';
+    
+    let x = 0;
+    let y = 0;
 
-    if (!data.selector) {
-      const expression = `window.scrollBy({ top: ${scrollY}, left: ${scrollX}, behavior: '${behavior}' })`;
-      await CDPService.evaluate(tabId, expression);
-      return { success: true, value: undefined };
+    if (data.selector) {
+      const box = await CDPService.getBoundingBox(tabId, data.selector);
+      if (!box) {
+        return { success: false, error: new Error(`Element not found: ${data.selector}`) };
+      }
+      x = box.x + box.width / 2;
+      y = box.y + box.height / 2;
+    } else {
+      // If no selector, scroll from the center of the viewport
+      const viewport = await CDPService.evaluate(tabId, `({ width: window.innerWidth, height: window.innerHeight })`);
+      x = viewport.width / 2;
+      y = viewport.height / 2;
     }
 
-    const expression = `
-      (() => {
-        const elements = ${data.multiple ? `Array.from(document.querySelectorAll('${data.selector.replace(/'/g, "\\'")}'))` : `[document.querySelector('${data.selector.replace(/'/g, "\\'")}')]`};
-        if (!elements[0]) return false;
-        elements.forEach(el => el.scrollBy({ top: ${scrollY}, left: ${scrollX}, behavior: '${behavior}' }));
-        return true;
-      })();
-    `;
-
-    const success = await CDPService.evaluate(tabId, expression);
-
-    if (!success) {
-      return { success: false, error: new Error(`Element not found: ${data.selector}`) };
-    }
+    // Input.synthesizeScrollGesture uses positive values for scrolling down/right,
+    // but we need to specify the distance to scroll.
+    // Note: xDistance and yDistance are the distance to scroll. Positive values scroll right/down.
+    await CDPService.sendCommand(tabId, 'Input.synthesizeScrollGesture', {
+      x,
+      y,
+      xDistance: scrollX,
+      yDistance: scrollY,
+      speed: data.smooth ? 800 : 2000, // Adjust speed based on smooth flag
+      repeatCount: 1,
+      repeatDelayMs: 0,
+      interactionMarkerName: 'elementScroll'
+    });
 
     return { success: true, value: undefined };
   } catch (error) {
