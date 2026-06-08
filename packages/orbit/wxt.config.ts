@@ -15,7 +15,7 @@ const removeDynamicImportsPlugin = () => {
 export default defineConfig({
   srcDir: 'src',
   manifest: {
-    permissions: ['storage', 'identity'],
+    permissions: ['storage', 'identity', 'tabs', 'activeTab', 'scripting', 'cookies', 'downloads', 'debugger'],
     host_permissions: [
       '<all_urls>'
     ],
