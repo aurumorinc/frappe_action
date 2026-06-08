@@ -1,7 +1,7 @@
 import { browser } from 'wxt/browser';
-import logger from '../utils/logger';
+import baseLogger from '../utils/logger';
 
-const extLogger = logger.child({ context: 'extension_service' });
+const logger = baseLogger.child({ context: 'extension_service' });
 
 export function startAction(todo: any, compiledJson: any) {
   if (browser && browser.runtime && browser.runtime.sendMessage) {
@@ -13,6 +13,6 @@ export function startAction(todo: any, compiledJson: any) {
       }
     });
   } else {
-    extLogger.warn("browser.runtime.sendMessage is not available. Action not started.");
+    logger.warn("browser.runtime.sendMessage is not available. Action not started.");
   }
 }

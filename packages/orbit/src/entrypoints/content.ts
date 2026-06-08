@@ -3,10 +3,10 @@ import { defineContentScript, createShadowRootUi } from '#imports';
 import { createApp } from 'vue';
 import ToDo from './ToDo.vue';
 import { domObserver } from "../utils/dom_observer";
-import logger from "../utils/logger";
+import baseLogger from "../utils/logger";
 import '../assets/tailwind.css'; // Import tailwind styles
 
-const contentLogger = logger.child({ context: 'content_script' });
+const logger = baseLogger.child({ context: 'content_script' });
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -27,37 +27,37 @@ export default defineContentScript({
           }
         });
       } else if (message.type === "TOGGLE_ORBIT_UI") {
-        contentLogger.debug("Received TOGGLE_ORBIT_UI message");
+        logger.debug("Received TOGGLE_ORBIT_UI message");
         if (ui) {
           if (!isMounted) {
-            contentLogger.debug("Mounting UI...");
+            logger.debug("Mounting UI...");
             try {
               ui.mount();
               isMounted = true;
-              contentLogger.info("UI mounted successfully");
+              logger.info("UI mounted successfully");
             } catch (e) {
-              contentLogger.error({ err: e }, "Error mounting UI");
+              logger.error({ err: e }, "Error mounting UI");
             }
           } else {
-            contentLogger.debug("Removing UI...");
+            logger.debug("Removing UI...");
             ui.remove();
             isMounted = false;
           }
         } else {
-          contentLogger.warn("UI not ready yet, waiting...");
+          logger.warn("UI not ready yet, waiting...");
           // If UI is not ready yet, wait a bit and try again
           setTimeout(() => {
             if (ui && !isMounted) {
-              contentLogger.debug("Mounting UI after delay...");
+              logger.debug("Mounting UI after delay...");
               try {
                 ui.mount();
                 isMounted = true;
-                contentLogger.info("UI mounted successfully after delay");
+                logger.info("UI mounted successfully after delay");
               } catch (e) {
-                contentLogger.error({ err: e }, "Error mounting UI after delay");
+                logger.error({ err: e }, "Error mounting UI after delay");
               }
             } else if (!ui) {
-              contentLogger.error("UI failed to initialize completely.");
+              logger.error("UI failed to initialize completely.");
             }
           }, 1000);
         }
@@ -69,7 +69,7 @@ export default defineContentScript({
       const actionName = customEvent.detail?.action_name;
 
       if (actionName) {
-        contentLogger.info({ actionName }, "Headless bot requested action");
+        logger.info({ actionName }, "Headless bot requested action");
       }
     });
 

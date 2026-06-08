@@ -2,23 +2,23 @@ import { defineBackground } from '#imports';
 import { Engine, ActionGraph } from "../services/engine";
 import { networkObserver } from "../utils/network_observer";
 import { saveSite, getActiveSite, getSites } from "../services/auth";
-import logger, { processTelemetry } from "../utils/logger";
+import baseLogger, { processTelemetry } from "../utils/logger";
 import { SentryManager } from "../lib/sentry";
 import { PostHogManager } from "../lib/posthog";
 import { fetchSentryConfig, fetchPosthogConfig } from "../services/api";
 
 export default defineBackground(() => {
-  const bgLogger = logger.child({ context: 'background' });
+  const logger = baseLogger.child({ context: 'background' });
   let currentEngine: Engine | null = null;
   let currentTodo: any = null;
 
   browser.action.onClicked.addListener((tab) => {
-    bgLogger.debug({ tabId: tab.id }, "Action clicked");
+    logger.debug({ tabId: tab.id }, "Action clicked");
     if (tab.id) {
       browser.tabs.sendMessage(tab.id, { type: "TOGGLE_ORBIT_UI" }).then(() => {
-        bgLogger.debug({ tabId: tab.id }, "Successfully sent TOGGLE_ORBIT_UI");
+        logger.debug({ tabId: tab.id }, "Successfully sent TOGGLE_ORBIT_UI");
       }).catch((err) => {
-        bgLogger.warn({ tabId: tab.id, err }, "Failed to send TOGGLE_ORBIT_UI (content script likely not injected)");
+        logger.warn({ tabId: tab.id, err }, "Failed to send TOGGLE_ORBIT_UI (content script likely not injected)");
       });
     }
   });
@@ -90,7 +90,7 @@ export default defineBackground(() => {
                     SentryManager.registerSiteConfig(siteUrl, config.dsn);
                   }
                 }).catch(err => {
-                  bgLogger.error({ err, siteUrl }, "Failed to initialize Sentry config");
+                  logger.error({ err, siteUrl }, "Failed to initialize Sentry config");
                 });
 
                 fetchPosthogConfig(newSite).then(config => {
@@ -98,7 +98,7 @@ export default defineBackground(() => {
                     PostHogManager.registerSiteConfig(siteUrl, config.api_key, config.host);
                   }
                 }).catch(err => {
-                  bgLogger.error({ err, siteUrl }, "Failed to initialize PostHog config");
+                  logger.error({ err, siteUrl }, "Failed to initialize PostHog config");
                 });
 
                 sendResponse({ success: true });
@@ -126,7 +126,7 @@ export default defineBackground(() => {
       currentTodo = message.payload.todo;
       currentEngine = new Engine(graph);
       
-      bgLogger.info({ eventName: 'action_started', siteUrl: currentTodo?.site?.url, todoName: currentTodo?.name }, "Action started");
+      logger.info({ eventName: 'action_started', siteUrl: currentTodo?.site?.url, todoName: currentTodo?.name }, "Action started");
       
       processNextNode();
       sendResponse({ status: "started" });
@@ -150,7 +150,7 @@ export default defineBackground(() => {
     const node = currentEngine.getCurrentNode();
     if (!node) {
       // Action complete
-      bgLogger.info({ eventName: 'action_completed', siteUrl: currentTodo?.site?.url, todoName: currentTodo?.name, scrapedData: currentEngine.scrapedData }, "Action complete");
+      logger.info({ eventName: 'action_completed', siteUrl: currentTodo?.site?.url, todoName: currentTodo?.name, scrapedData: currentEngine.scrapedData }, "Action complete");
       if (currentTodo) {
         const site = await getActiveSite();
         if (site) {
@@ -173,7 +173,7 @@ export default defineBackground(() => {
               })
             });
           } catch (e) {
-            bgLogger.error({ err: e, siteUrl: site.url }, "Failed to submit task data");
+            logger.error({ err: e, siteUrl: site.url }, "Failed to submit task data");
           }
         }
       }
@@ -209,7 +209,7 @@ export default defineBackground(() => {
           // We should wait for this ToDo to be closed, but for now we just create it
           // In a real implementation, we'd poll or wait for a message from the UI
         } catch (e) {
-          bgLogger.error({ err: e, siteUrl: site.url }, "Failed to create sub-task");
+          logger.error({ err: e, siteUrl: site.url }, "Failed to create sub-task");
         }
       }
     }

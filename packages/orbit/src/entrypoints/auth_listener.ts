@@ -1,8 +1,8 @@
 import { browser } from "wxt/browser";
 import { defineContentScript } from '#imports';
-import logger from '../utils/logger';
+import baseLogger from '../utils/logger';
 
-const authLogger = logger.child({ context: 'auth_listener' });
+const logger = baseLogger.child({ context: 'auth_listener' });
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -12,7 +12,7 @@ export default defineContentScript({
       if (event.source !== window) return;
 
       if (event.data && event.data.type === "ORBIT_START_AUTH") {
-        authLogger.info({ payload: event.data.payload }, "Orbit Extension: Received auth request");
+        logger.info({ payload: event.data.payload }, "Orbit Extension: Received auth request");
         
         browser.runtime.sendMessage(
           {
@@ -23,7 +23,7 @@ export default defineContentScript({
             if (response && response.success) {
               window.postMessage({ type: "ORBIT_AUTH_SUCCESS" }, "*");
             } else {
-              authLogger.error({ err: response?.error }, "Orbit Extension: Auth failed");
+              logger.error({ err: response?.error }, "Orbit Extension: Auth failed");
               window.postMessage({ type: "ORBIT_AUTH_FAILED", error: response?.error }, "*");
             }
           }
