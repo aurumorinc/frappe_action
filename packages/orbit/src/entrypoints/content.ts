@@ -17,7 +17,21 @@ export default defineContentScript({
 
     // --- Background Listeners ---
     browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      if (message.type === "START_DOM_OBSERVER") {
+      if (message.type === "REQUIRE_HITL") {
+        logger.info({ payload: message.payload }, "HITL required");
+        // Play chime
+        try {
+          const audio = new Audio(browser.runtime.getURL('/chime.mp3' as any));
+          audio.play().catch(e => logger.warn({ err: e }, "Could not play chime"));
+        } catch (e) {
+          logger.warn({ err: e }, "Audio not supported");
+        }
+        
+        // Dispatch event to Vue app
+        window.dispatchEvent(new CustomEvent("ORBIT_REQUIRE_HITL", { detail: message.payload }));
+      } else if (message.type === "RUN_ALL_COMPLETED") {
+        window.dispatchEvent(new CustomEvent("ORBIT_RUN_ALL_COMPLETED"));
+      } else if (message.type === "START_DOM_OBSERVER") {
         domObserver(message.payload).then((result) => {
           if (result.success) {
             browser.runtime.sendMessage({
