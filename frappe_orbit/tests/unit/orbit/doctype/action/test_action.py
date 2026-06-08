@@ -52,8 +52,8 @@ class TestActionCompiler(UnitTestCase):
             "action_name": "Test Branching Action",
             "nodes": [
                 {"node_id": "trigger", "node_type": "trigger"},
-                {"node_id": "path_a", "node_type": "manual-step"},
-                {"node_id": "path_b", "node_type": "manual-step"}
+                {"node_id": "path_a", "node_type": "hitl"},
+                {"node_id": "path_b", "node_type": "hitl"}
             ],
             "edges": [
                 {"source_node": "trigger", "target_node": "path_a", "condition": "amount > 100"},
