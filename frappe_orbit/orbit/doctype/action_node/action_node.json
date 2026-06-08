@@ -13,7 +13,8 @@
   "extract_target",
   "data_key",
   "url_template",
-  "message"
+  "message",
+  "node_data"
  ],
  "fields": [
   {
@@ -28,7 +29,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Node Type",
-   "options": "trigger\nelement-exists\nget-text\nloop-elements\nloop-breakpoint\nnetwork-request\nguide-user\nsub-task\nmanual-step\nredirect\nelement-clicked",
+   "options": "trigger\nelement-exists\nget-text\nloop-elements\nloop-breakpoint\nnetwork-request\nguide-user\nsub-task\nmanual-step\nredirect\nelement-clicked\nnodes:get-text\nnodes:element-exists\nnodes:event-click\nnodes:trigger-event\nnodes:forms\nnodes:javascript-code\nnodes:attribute-value\nnodes:conditions\nnodes:create-element\nnodes:element-scroll\nnodes:hover-element\nnodes:link\nnodes:press-key\nnodes:loop-data\nnodes:loop-elements\nnodes:clipboard\nnodes:save-assets\nnodes:switch-to\nnodes:take-screenshot\nnodes:upload-file\nnodes:verify-selector\nnodes:browser-event\nnodes:delay\nnodes:switch-tab\nnodes:close-tab\nnodes:cookie\nnodes:while-loop\nnodes:export-data\nnodes:delete-data\nnodes:sort-data\nnodes:workflow-state",
    "reqd": 1
   },
   {
@@ -66,6 +67,11 @@
    "fieldname": "message",
    "fieldtype": "Data",
    "label": "Message"
+  },
+  {
+   "fieldname": "node_data",
+   "fieldtype": "JSON",
+   "label": "Node Data"
   }
  ],
  "grid_page_length": 50,
