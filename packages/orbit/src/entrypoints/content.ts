@@ -6,6 +6,8 @@ import { domObserver } from "../utils/dom_observer";
 import logger from "../utils/logger";
 import '../assets/tailwind.css'; // Import tailwind styles
 
+const contentLogger = logger.child({ context: 'content_script' });
+
 export default defineContentScript({
   matches: ["<all_urls>"],
   cssInjectionMode: 'ui',
@@ -25,37 +27,37 @@ export default defineContentScript({
           }
         });
       } else if (message.type === "TOGGLE_ORBIT_UI") {
-        logger.debug("Received TOGGLE_ORBIT_UI message");
+        contentLogger.debug("Received TOGGLE_ORBIT_UI message");
         if (ui) {
           if (!isMounted) {
-            logger.debug("Mounting UI...");
+            contentLogger.debug("Mounting UI...");
             try {
               ui.mount();
               isMounted = true;
-              logger.info("UI mounted successfully");
+              contentLogger.info("UI mounted successfully");
             } catch (e) {
-              logger.error({ err: e }, "Error mounting UI");
+              contentLogger.error({ err: e }, "Error mounting UI");
             }
           } else {
-            logger.debug("Removing UI...");
+            contentLogger.debug("Removing UI...");
             ui.remove();
             isMounted = false;
           }
         } else {
-          logger.warn("UI not ready yet, waiting...");
+          contentLogger.warn("UI not ready yet, waiting...");
           // If UI is not ready yet, wait a bit and try again
           setTimeout(() => {
             if (ui && !isMounted) {
-              logger.debug("Mounting UI after delay...");
+              contentLogger.debug("Mounting UI after delay...");
               try {
                 ui.mount();
                 isMounted = true;
-                logger.info("UI mounted successfully after delay");
+                contentLogger.info("UI mounted successfully after delay");
               } catch (e) {
-                logger.error({ err: e }, "Error mounting UI after delay");
+                contentLogger.error({ err: e }, "Error mounting UI after delay");
               }
             } else if (!ui) {
-              logger.error("UI failed to initialize completely.");
+              contentLogger.error("UI failed to initialize completely.");
             }
           }, 1000);
         }
@@ -67,7 +69,7 @@ export default defineContentScript({
       const actionName = customEvent.detail?.action_name;
 
       if (actionName) {
-        logger.info({ actionName }, "Headless bot requested action");
+        contentLogger.info({ actionName }, "Headless bot requested action");
       }
     });
 

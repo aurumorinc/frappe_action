@@ -19,9 +19,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sentry/browser": "^10.56.0",
     "frappe-ui": "^0.1.278",
     "lucide-vue-next": "^0.378.0",
     "pino": "^10.3.1",
+    "posthog-js": "^1.382.0",
     "vue": "^3.4.21"
   },
   "devDependencies": {

@@ -1,21 +1,58 @@
-export async function updateTodoStatus(site: any, todoName: string, status: string) {
+import logger from '../utils/logger';
+
+export async function fetchSentryConfig(site: any) {
+  try {
+    const response = await fetch(`${site.url}/api/method/frappe_orbit.sentry.get_config`, {
+      headers: { 'Authorization': `Bearer ${site.accessToken}` },
+      credentials: 'omit'
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return data.message;
+    }
+    return null;
+  } catch (error) {
+    logger.error({ err: error, siteUrl: site.url }, `Failed to fetch Sentry config from ${site.url}`);
+    return null;
+  }
+}
+
+export async function fetchPosthogConfig(site: any) {
+  try {
+    const response = await fetch(`${site.url}/api/method/frappe_orbit.posthog.get_config`, {
+      headers: { 'Authorization': `Bearer ${site.accessToken}` },
+      credentials: 'omit'
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return data.message;
+    }
+    return null;
+  } catch (error) {
+    logger.error({ err: error, siteUrl: site.url }, `Failed to fetch PostHog config from ${site.url}`);
+    return null;
+  }
+}
+
+export async function updateTodoStatus(site: any, todoName: string, status: string, traceparent?: string) {
   try {
     const response = await fetch(`${site.url}/api/resource/ToDo/${todoName}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${site.accessToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(traceparent ? { 'traceparent': traceparent } : {})
       },
       credentials: 'omit',
       body: JSON.stringify({ status })
     });
     if (!response.ok) {
-      console.error(`Failed to update todo ${todoName} on ${site.url}`);
+      logger.error({ siteUrl: site.url, todoName }, `Failed to update todo ${todoName} on ${site.url}`);
       return false;
     }
     return true;
   } catch (error) {
-    console.error(`Error updating todo ${todoName} on ${site.url}:`, error);
+    logger.error({ err: error, siteUrl: site.url, todoName }, `Error updating todo ${todoName} on ${site.url}`);
     return false;
   }
 }
@@ -38,7 +75,7 @@ export async function fetchReportFromSites(sites: any[]) {
         }
       }
     } catch (error) {
-      console.error(`Failed to fetch report from ${site.url}:`, error);
+      logger.error({ err: error, siteUrl: site.url }, `Failed to fetch report from ${site.url}`);
     }
   }
   return { totalOpen, completedToday };
@@ -69,7 +106,7 @@ export async function fetchOpenTodosFromSites(sites: any[]) {
         }
       }
     } catch (error) {
-      console.error(`Failed to fetch open todos from ${site.url}:`, error);
+      logger.error({ err: error, siteUrl: site.url }, `Failed to fetch open todos from ${site.url}`);
     }
   }
   
@@ -106,7 +143,7 @@ export async function fetchSubTodosFromSite(site: any, parentId: string) {
     }
     return [];
   } catch (error) {
-    console.error(`Failed to fetch sub todos for ${parentId} from ${site.url}:`, error);
+    logger.error({ err: error, siteUrl: site.url, parentId }, `Failed to fetch sub todos for ${parentId} from ${site.url}`);
     return [];
   }
 }
@@ -123,7 +160,7 @@ export async function fetchActionGraph(site: any, actionName: string) {
     }
     return null;
   } catch (error) {
-    console.error(`Failed to fetch action graph for ${actionName} on ${site.url}:`, error);
+    logger.error({ err: error, siteUrl: site.url, actionName }, `Failed to fetch action graph for ${actionName} on ${site.url}`);
     return null;
   }
 }
