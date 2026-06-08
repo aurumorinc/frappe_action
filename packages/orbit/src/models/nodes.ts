@@ -1,4 +1,9 @@
-export type RPA_NodeType =
+export type NodeType =
+  | 'trigger'
+  | 'loop-breakpoint'
+  | 'hitl'
+  | 'sub-task'
+  | 'redirect'
   | 'nodes:get-text'
   | 'nodes:element-exists'
   | 'nodes:event-click'
@@ -185,7 +190,14 @@ export interface WorkflowStateNodeData {
   variables: Record<string, any>;
 }
 
-export type NodeData<T extends RPA_NodeType> = 
+export interface HitlNodeData {
+  message?: string;
+  todo_type?: 'captcha' | 'login' | 'form_fill' | 'approval' | 'custom';
+  data_key?: string;
+}
+
+export type NodeData<T extends NodeType> =
+  T extends 'hitl' ? HitlNodeData :
   T extends 'nodes:get-text' ? GetTextNodeData :
   T extends 'nodes:element-exists' ? ElementExistsNodeData :
   T extends 'nodes:event-click' ? EventClickNodeData :

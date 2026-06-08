@@ -28,7 +28,13 @@
     <div class="h-full overflow-hidden flex flex-col">
       <div v-if="!isOnboardingStepsCompleted && !showSettings" class="flex flex-col h-full overflow-hidden">
         <div class="flex flex-col justify-center items-center gap-1 mt-4 mb-7">
-          <component :is="logo" class="size-10 shrink-0 rounded mb-4" />
+          <component
+            :is="logo"
+            class="size-10 shrink-0 rounded mb-4 cursor-pointer transition-transform duration-300"
+            :class="{ 'animate-spin': isRunning, 'hover:scale-110': !isRunning }"
+            @click="runAll"
+            title="Run All"
+          />
           <div class="text-base font-medium">
             {{ 'Welcome to ' + title }}
           </div>
@@ -127,6 +133,11 @@
           Settings Content
         </div>
       </div>
+      <div v-if="hitlNode" class="flex flex-col h-full overflow-hidden p-4 bg-surface-gray-1 rounded mt-2">
+        <div class="text-lg font-bold mb-2">Human Intervention Required</div>
+        <div class="mb-4 text-sm">{{ hitlNode.message }}</div>
+        <Button variant="solid" label="Continue" @click="submitHitl" />
+      </div>
     </div>
     <div v-for="item in footerItems" class="flex flex-col gap-1.5">
       <div
@@ -155,6 +166,7 @@ import logger from '../utils/logger'
 const show = ref(true)
 const minimize = ref(false)
 const showSettings = ref(false)
+const hitlNode = ref<any>(null)
 
 const title = 'Frappe Orbit'
 const logo = markRaw(OrbitLogo)
@@ -178,7 +190,9 @@ const {
   skipAll,
   selectTodo,
   goBack,
-  fetchTodos
+  fetchTodos,
+  runAll,
+  isRunning
 } = useTodos()
 
 const currentActionHasAction = computed(() => {
@@ -238,5 +252,25 @@ function resetOnboardingSteps() {
 onMounted(() => {
   logger.debug("ToDo component mounted");
   fetchTodos();
+
+  window.addEventListener("ORBIT_REQUIRE_HITL", (event) => {
+    hitlNode.value = event.detail;
+    show.value = true; // Ensure UI is visible
+    minimize.value = false; // Ensure UI is not minimized
+  });
+
+  window.addEventListener("ORBIT_RUN_ALL_COMPLETED", () => {
+    isRunning.value = false;
+  });
 })
+
+function submitHitl() {
+  import('wxt/browser').then(({ browser }) => {
+    browser.runtime.sendMessage({
+      type: "HITL_RESULT",
+      payload: { data: "User completed task" }
+    });
+  });
+  hitlNode.value = null;
+}
 </script>

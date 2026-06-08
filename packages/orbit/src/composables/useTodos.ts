@@ -14,6 +14,7 @@ export function useTodos() {
   const isLoading = ref(true);
   const hasAuthenticatedSites = ref(false);
   const isOnboardingStepsCompleted = ref(false);
+  const isRunning = ref(false);
 
   const totalActions = computed(() => {
     if (navigationStack.value.length > 0) {
@@ -126,6 +127,42 @@ export function useTodos() {
     }
   }
 
+  async function run(todo: any) {
+    if (todo.action) {
+      const actionData = await fetchActionGraph(todo.site, todo.action);
+      if (actionData && actionData.compiled_json) {
+        startAction(todo, JSON.parse(actionData.compiled_json));
+      }
+    }
+  }
+
+  async function runAll() {
+    if (isRunning.value) return;
+    isRunning.value = true;
+    const todosToRun: any[] = [];
+    for (const action of visibleActions.value) {
+      if (!action.completed && action.action) {
+        const actionData = await fetchActionGraph(action.site, action.action);
+        if (actionData && actionData.compiled_json) {
+          todosToRun.push({
+            todo: action,
+            compiled_json: JSON.parse(actionData.compiled_json)
+          });
+        }
+      }
+    }
+    if (todosToRun.length > 0) {
+      import('wxt/browser').then(({ browser }) => {
+        browser.runtime.sendMessage({
+          type: "START_RUN_ALL",
+          payload: { todos: todosToRun }
+        });
+      });
+    } else {
+      isRunning.value = false;
+    }
+  }
+
   async function goBack() {
     navigationStack.value.pop();
     if (navigationStack.value.length === 0) {
@@ -206,6 +243,9 @@ export function useTodos() {
     skipAll,
     selectTodo,
     goBack,
-    fetchTodos
+    fetchTodos,
+    run,
+    runAll,
+    isRunning
   };
 }
