@@ -1,3 +1,6 @@
+import { RPA_NodeType } from '../models/nodes';
+import { executeNode } from '../nodes';
+
 export type NodeType =
   | 'trigger'
   | 'element-exists'
@@ -9,19 +12,13 @@ export type NodeType =
   | 'sub-task'
   | 'manual-step'
   | 'redirect'
-  | 'element-clicked';
+  | 'element-clicked'
+  | RPA_NodeType;
 
 export interface ActionNode {
   id: string;
   type: NodeType;
-  data: {
-    target_selector?: string;
-    extract_target?: string;
-    data_key?: string;
-    url_template?: string;
-    message?: string;
-    is_sub_task?: boolean;
-  };
+  data: Record<string, any>;
 }
 
 export interface ActionEdge {
@@ -68,13 +65,24 @@ export class Engine {
     });
   }
 
-  public advance(data?: Record<string, unknown>): Result<ActionNode | null> {
+  public async advance(data?: Record<string, unknown>): Promise<Result<ActionNode | null>> {
     if (data) {
       this.scrapedData = { ...this.scrapedData, ...data };
     }
 
     if (!this.currentNodeId) {
       return { success: false, error: new Error("Engine has no current node") };
+    }
+
+    const currentNode = this.getCurrentNode();
+    if (currentNode && currentNode.type.startsWith('nodes:')) {
+      const result = await executeNode(currentNode, this);
+      if (!result.success) {
+        return result;
+      }
+      if (result.value && typeof result.value === 'object') {
+        this.scrapedData = { ...this.scrapedData, ...result.value };
+      }
     }
 
     const outgoingEdges = this.graph.edges.filter(e => e.source === this.currentNodeId);
