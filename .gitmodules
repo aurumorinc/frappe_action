@@ -7,3 +7,9 @@
 [submodule "third_party/frappe-ui"]
 	path = third_party/frappe-ui
 	url = https://github.com/frappe/frappe-ui
+[submodule "third_party/ghost-cursor"]
+	path = third_party/ghost-cursor
+	url = https://github.com/Xetera/ghost-cursor
+[submodule "third_party/HumanTyping"]
+	path = third_party/HumanTyping
+	url = https://github.com/Lax3n/HumanTyping.git
