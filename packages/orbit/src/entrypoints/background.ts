@@ -11,6 +11,8 @@ export default defineBackground(() => {
   const logger = baseLogger.child({ context: 'background' });
   let currentEngine: Engine | null = null;
   let currentTodo: any = null;
+  let todoQueue: any[] = [];
+  let isRunningAll = false;
 
   browser.action.onClicked.addListener((tab) => {
     logger.debug({ tabId: tab.id }, "Action clicked");
@@ -125,11 +127,22 @@ export default defineBackground(() => {
       const graph: ActionGraph = message.payload.compiled_json;
       currentTodo = message.payload.todo;
       currentEngine = new Engine(graph);
+      isRunningAll = false;
       
       logger.info({ eventName: 'action_started', siteUrl: currentTodo?.site?.url, todoName: currentTodo?.name }, "Action started");
       
       processNextNode();
       sendResponse({ status: "started" });
+    } else if (message.type === "START_RUN_ALL") {
+      todoQueue = message.payload.todos || [];
+      isRunningAll = true;
+      if (todoQueue.length > 0) {
+        startNextTodoFromQueue();
+        sendResponse({ status: "started_run_all" });
+      } else {
+        isRunningAll = false;
+        sendResponse({ status: "empty_queue" });
+      }
     } else if (message.type === "DOM_OBSERVER_RESULT") {
       if (currentEngine) {
         const currentNode = currentEngine.getCurrentNode();
@@ -140,9 +153,43 @@ export default defineBackground(() => {
         }
         processNextNode();
       }
+    } else if (message.type === "HITL_RESULT") {
+      if (currentEngine) {
+        const currentNode = currentEngine.getCurrentNode();
+        if (currentNode && currentNode.type === "hitl") {
+          if (currentNode.data.data_key && message.payload.data) {
+            currentEngine.advance({ [currentNode.data.data_key]: message.payload.data });
+          } else {
+            currentEngine.advance();
+          }
+          processNextNode();
+        }
+      }
     }
     return true;
   });
+
+  function startNextTodoFromQueue() {
+    if (todoQueue.length === 0) {
+      isRunningAll = false;
+      browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+        if (tabs[0]?.id) {
+          browser.tabs.sendMessage(tabs[0].id, { type: "RUN_ALL_COMPLETED" });
+        }
+      });
+      return;
+    }
+    const nextTodo = todoQueue.shift();
+    if (nextTodo && nextTodo.compiled_json) {
+      currentTodo = nextTodo;
+      currentEngine = new Engine(nextTodo.compiled_json);
+      logger.info({ eventName: 'action_started', siteUrl: currentTodo?.site?.url, todoName: currentTodo?.name }, "Action started from queue");
+      processNextNode();
+    } else {
+      // Skip invalid todo
+      startNextTodoFromQueue();
+    }
+  }
 
   async function processNextNode() {
     if (!currentEngine) return;
@@ -176,6 +223,10 @@ export default defineBackground(() => {
             logger.error({ err: e, siteUrl: site.url }, "Failed to submit task data");
           }
         }
+      }
+      
+      if (isRunningAll) {
+        startNextTodoFromQueue();
       }
       return;
     }
@@ -236,48 +287,26 @@ export default defineBackground(() => {
       }
       currentEngine.advance();
       processNextNode();
-    } else if (node.type === "network-request") {
-      const result = await networkObserver({
-        target_selector: node.data.target_selector || "",
-        extract_target: node.data.extract_target || ""
-      });
-      
-      if (result.success) {
-        let value = result.value;
-        if (node.data.extract_target && typeof value === 'object') {
-          // Simple JSON path extraction (e.g., "organization.id")
-          const parts = node.data.extract_target.split('.');
-          for (const part of parts) {
-            if (value && typeof value === 'object') {
-              value = (value as any)[part];
-            } else {
-              value = undefined;
-              break;
-            }
-          }
-        }
-        if (node.data.data_key) {
-          currentEngine.advance({ [node.data.data_key]: value });
-        } else {
-          currentEngine.advance();
-        }
-        processNextNode();
-      }
-    } else if (node.type === "get-text" || node.type === "element-exists" || node.type === "element-clicked") {
-      // Send message to content script to start DOM observer
-      browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    } else if (node.type === "hitl") {
+      // Pause execution and notify UI
+      browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
         if (tabs[0]?.id) {
           browser.tabs.sendMessage(tabs[0].id, {
-            type: "START_DOM_OBSERVER",
+            type: "REQUIRE_HITL",
             payload: {
-              target_selector: node.data.target_selector,
-              extract_target: node.data.extract_target
+              nodeId: node.id,
+              nodeType: node.type,
+              message: node.data.message || "Human intervention required",
+              todo_type: node.data.todo_type,
+              dataKey: node.data.data_key
             }
           });
         }
       });
+      // Do not call currentEngine.advance() or processNextNode() here.
+      // We will wait for a message from the UI to resume.
     } else {
-      // Other node types (trigger, manual-step, etc.)
+      // Other node types
       currentEngine.advance();
       processNextNode();
     }

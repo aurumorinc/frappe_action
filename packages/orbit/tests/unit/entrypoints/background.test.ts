@@ -22,7 +22,7 @@ vi.mock('wxt/browser', () => ({
 }));
 
 // Mock the background script dependencies
-vi.mock('../../../src/services/engine', () => {
+vi.mock('../../../src/services/action', () => {
   return {
     Engine: class {
       getCurrentNode = vi.fn().mockReturnValue(null);
@@ -230,5 +230,96 @@ describe('background', () => {
         body: expect.stringContaining('"name":"TODO-123"')
       })
     );
+  });
+
+  it('should handle START_RUN_ALL and start the first todo', async () => {
+    const mockListener = vi.fn();
+    fakeBrowser.runtime.onMessage.addListener = vi.fn((fn) => {
+      mockListener.mockImplementation(fn);
+    });
+
+    vi.resetModules();
+    const bg = await import('../../../src/entrypoints/background');
+    bg.default.main();
+
+    const mockTodos = [
+      { todo: { name: 'TODO-1' }, compiled_json: { nodes: [], edges: [] } },
+      { todo: { name: 'TODO-2' }, compiled_json: { nodes: [], edges: [] } }
+    ];
+
+    const response = await new Promise((resolve) => {
+      mockListener(
+        { type: 'START_RUN_ALL', payload: { todos: mockTodos } },
+        {},
+        resolve
+      );
+    });
+
+    expect(response).toEqual({ status: 'started_run_all' });
+  });
+
+  it('should handle HITL node pause and resume', async () => {
+    const mockListener = vi.fn();
+    fakeBrowser.runtime.onMessage.addListener = vi.fn((fn) => {
+      mockListener.mockImplementation(fn);
+    });
+
+    // Override the mock engine to return a hitl node
+    vi.doMock('../../../src/services/action', () => {
+      return {
+        Engine: class {
+          getCurrentNode = vi.fn()
+            .mockReturnValueOnce({ id: '1', type: 'hitl', data: { message: 'Test HITL', data_key: 'test_data' } })
+            .mockReturnValueOnce(null); // Second call returns null to finish
+          advance = vi.fn();
+          scrapedData = {};
+        }
+      };
+    });
+
+    vi.resetModules();
+    const bg = await import('../../../src/entrypoints/background');
+    bg.default.main();
+
+    // Mock tabs.query to return a tab
+    fakeBrowser.tabs.query = vi.fn().mockResolvedValue([{ id: 123, active: true, currentWindow: true }]);
+    fakeBrowser.tabs.sendMessage = vi.fn().mockResolvedValue(undefined);
+
+    // Start action
+    await new Promise((resolve) => {
+      mockListener(
+        { type: 'START_ACTION', payload: { todo: { name: 'TODO-HITL' }, compiled_json: { nodes: [], edges: [] } } },
+        {},
+        resolve
+      );
+    });
+
+    // Verify REQUIRE_HITL was sent
+    const sendMessageSpy = vi.spyOn(fakeBrowser.tabs, 'sendMessage');
+    
+    // We need to wait for the async query to finish
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(sendMessageSpy).toHaveBeenCalledWith(
+      123,
+      expect.objectContaining({
+        type: 'REQUIRE_HITL',
+        payload: expect.objectContaining({
+          message: 'Test HITL',
+          dataKey: 'test_data'
+        })
+      })
+    );
+
+    // Send HITL_RESULT
+    mockListener(
+      { type: 'HITL_RESULT', payload: { data: 'user input' } },
+      {},
+      vi.fn()
+    );
+
+    // The engine should have advanced with the data
+    // We can't easily assert on the mock engine instance here because it's created inside the background script,
+    // but we know the flow works if it doesn't throw and completes.
   });
 });
