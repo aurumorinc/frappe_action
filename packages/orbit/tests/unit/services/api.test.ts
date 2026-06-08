@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { updateTodoStatus, fetchOpenTodosFromSites, fetchActionGraph } from '../../../src/services/api';
+import { updateTodoStatus, fetchOpenTodosFromSites, fetchActionGraph, fetchSentryConfig, fetchPosthogConfig } from '../../../src/services/api';
 
 describe('api.ts', () => {
   beforeEach(() => {
@@ -26,6 +26,12 @@ describe('api.ts', () => {
     const { fetchReportFromSites, fetchSubTodosFromSite } = await import('../../../src/services/api');
     
     await fetchReportFromSites([site]);
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ credentials: 'omit' }));
+    
+    await fetchSentryConfig(site);
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ credentials: 'omit' }));
+    
+    await fetchPosthogConfig(site);
     expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ credentials: 'omit' }));
     
     await fetchOpenTodosFromSites([site]);
@@ -66,5 +72,49 @@ describe('api.ts', () => {
     
     const result = await fetchActionGraph({ url: 'http://test', accessToken: 'token' }, 'action1');
     expect(result).toEqual({ compiled_json: '{}' });
+  });
+
+  it('fetchSentryConfig returns message on success', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ message: { dsn: 'test_dsn' } })
+    } as Response);
+    
+    const result = await fetchSentryConfig({ url: 'http://test', accessToken: 'token' });
+    expect(result).toEqual({ dsn: 'test_dsn' });
+  });
+
+  it('fetchSentryConfig returns null on failure', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({ ok: false } as Response);
+    const result = await fetchSentryConfig({ url: 'http://test', accessToken: 'token' });
+    expect(result).toBeNull();
+  });
+
+  it('fetchSentryConfig returns null on error', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+    const result = await fetchSentryConfig({ url: 'http://test', accessToken: 'token' });
+    expect(result).toBeNull();
+  });
+
+  it('fetchPosthogConfig returns message on success', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ message: { api_key: 'test_key', host: 'test_host' } })
+    } as Response);
+    
+    const result = await fetchPosthogConfig({ url: 'http://test', accessToken: 'token' });
+    expect(result).toEqual({ api_key: 'test_key', host: 'test_host' });
+  });
+
+  it('fetchPosthogConfig returns null on failure', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({ ok: false } as Response);
+    const result = await fetchPosthogConfig({ url: 'http://test', accessToken: 'token' });
+    expect(result).toBeNull();
+  });
+
+  it('fetchPosthogConfig returns null on error', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+    const result = await fetchPosthogConfig({ url: 'http://test', accessToken: 'token' });
+    expect(result).toBeNull();
   });
 });
