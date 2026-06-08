@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Target Page for E2E Tests</title>
+    <style>
+        .hidden { display: none; }
+        .scrollable { height: 100px; overflow-y: auto; border: 1px solid black; }
+    </style>
+</head>
+<body>
+    <h1>Test Page</h1>
+    
+    <div id="text-node">Hello World</div>
+    <div id="text-node-multiple" class="item">Item 1</div>
+    <div id="text-node-multiple" class="item">Item 2</div>
+
+    <button id="click-btn">Click Me</button>
+    <div id="click-result"></div>
+
+    <form id="test-form">
+        <input type="text" id="text-input" value="initial">
+        <select id="select-input">
+            <option value="opt1">Option 1</option>
+            <option value="opt2">Option 2</option>
+        </select>
+        <input type="checkbox" id="checkbox-input">
+    </form>
+
+    <div id="attr-node" data-test="original">Attribute Test</div>
+
+    <div id="visible-node">Visible</div>
+    <div id="hidden-node" class="hidden">Hidden</div>
+
+    <div id="scroll-container" class="scrollable">
+        <div style="height: 500px;">Tall content</div>
+    </div>
+
+    <a id="test-link" href="https://example.com">Example Link</a>
+
+    <script>
+        document.getElementById('click-btn').addEventListener('click', () => {
+            document.getElementById('click-result').innerText = 'Clicked!';
+        });
+    </script>
+</body>
+</html>
