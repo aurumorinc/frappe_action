@@ -20,10 +20,12 @@
   "license": "ISC",
   "dependencies": {
     "@sentry/browser": "^10.56.0",
+    "bezier-js": "^6.1.4",
     "frappe-ui": "^0.1.278",
     "lucide-vue-next": "^0.378.0",
     "pino": "^10.3.1",
     "posthog-js": "^1.382.0",
+    "sizzle": "^2.3.10",
     "vue": "^3.4.21"
   },
   "devDependencies": {
@@ -31,9 +33,11 @@
     "@playwright/test": "^1.60.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/vue": "^8.0.3",
+    "@types/bezier-js": "^4.1.3",
     "@types/chrome": "^0.1.42",
     "@types/node": "^25.9.1",
     "@types/pino": "^7.0.4",
+    "@types/sizzle": "^2.3.10",
     "@vitejs/plugin-vue": "^6.0.7",
     "@wxt-dev/auto-icons": "^1.1.1",
     "@wxt-dev/module-vue": "^1.0.0",
