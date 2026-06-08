@@ -49,14 +49,59 @@ export default async function forms(data: FormsNodeData, id: string): Promise<Re
           }
         }
       }
-    } else {
-      // For select, checkbox, radio, we might still need to use DOM manipulation
-      // because CDP doesn't easily select options by value without complex DOM traversal.
-      // We can send a message to the content script to handle the non-text inputs.
-      await browser.tabs.sendMessage(tabId, {
-        type: 'HANDLE_NON_TEXT_FORM',
-        payload: { data, id }
-      });
+    } else if (data.type === 'checkbox' || data.type === 'radio') {
+      // For checkbox and radio, the initial click() above already toggled it.
+      // However, if we need to set it to a specific state based on data.value (e.g., "true" or "false"),
+      // we should check its current state first.
+      if (data.value !== undefined) {
+        const targetState = data.value === 'true';
+        const currentState = await CDPService.evaluate(tabId, `document.querySelector('${data.selector.replace(/'/g, "\\'")}').checked`);
+        
+        if (currentState !== targetState) {
+          // Click again to toggle to the desired state
+          await cursor.click(box);
+        }
+      }
+    } else if (data.type === 'select') {
+      // For select, we already clicked it to open the dropdown.
+      // Now we need to find the option and click it.
+      if (data.value) {
+        // Wait a bit for the dropdown to render
+        await delay(300);
+        
+        // Find the option element's bounding box
+        const optionExpression = `
+          (() => {
+            const select = document.querySelector('${data.selector.replace(/'/g, "\\'")}');
+            if (!select) return null;
+            
+            // Try to find option by value first, then by text
+            let option = Array.from(select.options).find(opt => opt.value === '${data.value!.replace(/'/g, "\\'")}');
+            if (!option) {
+              option = Array.from(select.options).find(opt => opt.text.includes('${data.value!.replace(/'/g, "\\'")}'));
+            }
+            
+            if (!option) return null;
+            
+            const rect = option.getBoundingClientRect();
+            // If the option has no size (e.g., native OS dropdown), we can't click it via CDP easily.
+            // In that case, we fallback to setting the value and dispatching a change event.
+            if (rect.width === 0 || rect.height === 0) {
+              select.value = option.value;
+              select.dispatchEvent(new Event('change', { bubbles: true }));
+              return { fallback: true };
+            }
+            
+            return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+          })();
+        `;
+        
+        const optionBox = await CDPService.evaluate(tabId, optionExpression);
+        
+        if (optionBox && !optionBox.fallback) {
+          await cursor.click(optionBox);
+        }
+      }
     }
 
     if (data.submitForm) {
