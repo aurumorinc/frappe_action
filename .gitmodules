@@ -13,3 +13,6 @@
 [submodule "third_party/HumanTyping"]
 	path = third_party/HumanTyping
 	url = https://github.com/Lax3n/HumanTyping.git
+[submodule "third_party/stagehand"]
+	path = third_party/stagehand
+	url = https://github.com/browserbase/stagehand
