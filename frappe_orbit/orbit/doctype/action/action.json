@@ -9,6 +9,7 @@
  "field_order": [
   "action_name",
   "target_url",
+  "model",
   "nodes",
   "edges",
   "compiled_json"
@@ -26,6 +27,12 @@
    "fieldname": "target_url",
    "fieldtype": "Data",
    "label": "Target URL"
+  },
+  {
+   "fieldname": "model",
+   "fieldtype": "Link",
+   "label": "Model",
+   "options": "Model"
   },
   {
    "fieldname": "nodes",
