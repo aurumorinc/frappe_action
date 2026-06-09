@@ -1,5 +1,5 @@
 import { browser } from 'wxt/browser';
-import baseLogger from '../utils/logger';
+import baseLogger from '../../utils/logging';
 
 const logger = baseLogger.child({ context: 'cdp_service' });
 
@@ -45,7 +45,7 @@ export class CDPService {
   /**
    * Sends a CDP command to a specific tab.
    */
-  static async sendCommand(tabId: number, method: string, commandParams?: any): Promise<any> {
+  static async sendCommand(tabId: number, method: string, commandParams?: Record<string, unknown>): Promise<any> {
     await this.attach(tabId);
 
     try {

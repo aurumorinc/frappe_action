@@ -1,5 +1,5 @@
 import { browser } from "wxt/browser";
-import { Result } from "../services/engine";
+import { Result } from "../../../nodes/types";
 
 export interface NetworkObserverConfig {
   target_selector: string; // URL regex
@@ -8,7 +8,7 @@ export interface NetworkObserverConfig {
 
 export function networkObserver(config: NetworkObserverConfig): Promise<Result<unknown>> {
   return new Promise((resolve) => {
-    const listener = (details: browser.webRequest.WebRequestBodyDetails) => {
+    const listener = (details: any) => {
       const regex = new RegExp(config.target_selector);
       if (regex.test(details.url)) {
         browser.webRequest.onBeforeRequest.removeListener(listener);
@@ -21,11 +21,12 @@ export function networkObserver(config: NetworkObserverConfig): Promise<Result<u
           } else if (details.requestBody.formData) {
             body = details.requestBody.formData;
           }
-          resolve({ success: true, value: body });
+          resolve({ success: true, data: body });
         } else {
-          resolve({ success: true, value: null });
+          resolve({ success: true, data: null });
         }
       }
+      return undefined;
     };
 
     browser.webRequest.onBeforeRequest.addListener(

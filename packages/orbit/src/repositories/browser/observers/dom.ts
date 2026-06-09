@@ -1,4 +1,4 @@
-import { Result } from "../services/engine";
+import { Result } from "../../../nodes/types";
 
 export interface DomObserverConfig {
   target_selector: string;
@@ -11,7 +11,7 @@ export function domObserver(config: DomObserverConfig): Promise<Result<unknown>>
     
     if (element) {
       const value = extractValue(element, config.extract_target);
-      resolve({ success: true, value });
+      resolve({ success: true, data: value });
       return;
     }
 
@@ -21,7 +21,7 @@ export function domObserver(config: DomObserverConfig): Promise<Result<unknown>>
         obs.disconnect();
         clearTimeout(timeoutId);
         const value = extractValue(el, config.extract_target);
-        resolve({ success: true, value });
+        resolve({ success: true, data: value });
       }
     });
 
@@ -33,7 +33,7 @@ export function domObserver(config: DomObserverConfig): Promise<Result<unknown>>
 
     const timeoutId = setTimeout(() => {
       observer.disconnect();
-      resolve({ success: false, error: new Error('Timeout waiting for element') });
+      resolve({ success: false, error: 'Timeout waiting for element' });
     }, 30000);
   });
 }
