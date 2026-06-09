@@ -67,7 +67,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Node Type",
-   "options": "trigger\nelement-exists\nget-text\nloop-elements\nloop-breakpoint\nnetwork-request\nhitl\nsub-task\nredirect\nelement-clicked\nnodes:get-text\nnodes:element-exists\nnodes:event-click\nnodes:trigger-event\nnodes:forms\nnodes:javascript-code\nnodes:attribute-value\nnodes:conditions\nnodes:create-element\nnodes:element-scroll\nnodes:hover-element\nnodes:link\nnodes:press-key\nnodes:loop-data\nnodes:loop-elements\nnodes:clipboard\nnodes:save-assets\nnodes:switch-to\nnodes:take-screenshot\nnodes:upload-file\nnodes:verify-selector\nnodes:browser-event\nnodes:delay\nnodes:switch-tab\nnodes:close-tab\nnodes:cookie\nnodes:while-loop\nnodes:export-data\nnodes:delete-data\nnodes:sort-data\nnodes:workflow-state",
+   "options": "trigger\nloop-breakpoint\nhitl\nsub-task\nredirect\nnodes:get-text\nnodes:element-exists\nnodes:event-click\nnodes:trigger-event\nnodes:forms\nnodes:javascript-code\nnodes:attribute-value\nnodes:conditions\nnodes:create-element\nnodes:element-scroll\nnodes:hover-element\nnodes:link\nnodes:press-key\nnodes:loop-data\nnodes:loop-elements\nnodes:clipboard\nnodes:save-assets\nnodes:switch-to\nnodes:take-screenshot\nnodes:upload-file\nnodes:verify-selector\nnodes:browser-event\nnodes:delay\nnodes:switch-tab\nnodes:close-tab\nnodes:cookie\nnodes:while-loop\nnodes:export-data\nnodes:delete-data\nnodes:sort-data\nnodes:workflow-state\nnodes:act\nnodes:extract\nnodes:observe",
    "reqd": 1
   },
   {
@@ -77,19 +77,19 @@
    "label": "Is Sub Task"
   },
   {
-   "depends_on": "eval:in_list(['element-exists', 'get-text', 'loop-elements', 'network-request', 'element-clicked'], doc.node_type)",
+   "depends_on": "eval:in_list(['nodes:element-exists', 'nodes:get-text', 'nodes:loop-elements', 'nodes:browser-event', 'nodes:event-click'], doc.node_type)",
    "fieldname": "target_selector",
    "fieldtype": "Data",
    "label": "Target Selector"
   },
   {
-   "depends_on": "eval:in_list(['get-text', 'network-request'], doc.node_type)",
+   "depends_on": "eval:in_list(['nodes:get-text', 'nodes:browser-event'], doc.node_type)",
    "fieldname": "extract_target",
    "fieldtype": "Data",
    "label": "Extract Target"
   },
   {
-   "depends_on": "eval:in_list(['get-text', 'network-request'], doc.node_type)",
+   "depends_on": "eval:in_list(['nodes:get-text', 'nodes:browser-event'], doc.node_type)",
    "fieldname": "data_key",
    "fieldtype": "Data",
    "label": "Data Key"
@@ -345,7 +345,20 @@
    "fieldname": "variables",
    "fieldtype": "JSON",
    "label": "Variables",
-   "depends_on": "eval:doc.node_type=='nodes:workflow-state'"
+   "depends_on": "eval:in_list(['nodes:workflow-state', 'nodes:act', 'nodes:extract', 'nodes:observe'], doc.node_type)"
+  },
+  {
+   "fieldname": "instruction",
+   "fieldtype": "Text",
+   "label": "Instruction",
+   "depends_on": "eval:in_list(['nodes:act', 'nodes:extract', 'nodes:observe'], doc.node_type)"
+  },
+  {
+   "fieldname": "schema",
+   "fieldtype": "Code",
+   "options": "JSON",
+   "label": "Schema",
+   "depends_on": "eval:doc.node_type=='nodes:extract'"
   }
  ],
  "grid_page_length": 50,
