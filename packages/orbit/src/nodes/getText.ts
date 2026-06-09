@@ -1,16 +1,12 @@
-import { GetTextNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { CDPService } from '../services/cdp';
-import { browser } from 'wxt/browser';
+import { GetTextNodeData, NodeType, Result } from './types';
 
-export default async function getText(data: GetTextNodeData, id: string): Promise<Result<string | string[]>> {
+export const getTextNode: NodeType<GetTextNodeData> = {
+  id: 'nodes:get-text',
+  name: 'getText',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: new Error('No active tab found') };
-    }
-    const tabId = tabs[0].id;
-
+    
     const expression = `
       (() => {
         const elements = ${data.multiple ? `Array.from(document.querySelectorAll('${data.selector.replace(/'/g, "\\'")}'))` : `[document.querySelector('${data.selector.replace(/'/g, "\\'")}')]`};
@@ -30,10 +26,10 @@ export default async function getText(data: GetTextNodeData, id: string): Promis
       })();
     `;
 
-    const rawTexts = await CDPService.evaluate(tabId, expression);
+    const rawTexts = await context.browser.evaluate( expression);
 
     if (!rawTexts) {
-      return { success: false, error: new Error(`Element not found: ${data.selector}`) };
+      return { success: false, error: String(new Error(`Element not found: ${data.selector}`)) };
     }
 
     let regex: RegExp | undefined;
@@ -49,8 +45,11 @@ export default async function getText(data: GetTextNodeData, id: string): Promis
       return (data.prefixText || '') + text + (data.suffixText || '');
     });
 
-    return { success: true, value: data.multiple ? processedTexts : processedTexts[0] };
+    // Store result in context if needed
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

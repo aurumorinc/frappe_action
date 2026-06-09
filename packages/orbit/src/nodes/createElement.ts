@@ -1,16 +1,12 @@
-import { CreateElementNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { CDPService } from '../services/cdp';
-import { browser } from 'wxt/browser';
+import { CreateElementNodeData, NodeType, Result } from './types';
 
-export default async function createElement(data: CreateElementNodeData, id: string): Promise<Result<void>> {
+export const createElementNode: NodeType<CreateElementNodeData> = {
+  id: 'nodes:create-element',
+  name: 'createElement',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: new Error('No active tab found') };
-    }
-    const tabId = tabs[0].id;
-
+    
     let position = 'beforeend';
     switch (data.insertType) {
       case 'append': position = 'beforeend'; break;
@@ -28,14 +24,16 @@ export default async function createElement(data: CreateElementNodeData, id: str
       })();
     `;
 
-    const success = await CDPService.evaluate(tabId, expression);
+    const success = await context.browser.evaluate( expression);
 
     if (!success) {
-      return { success: false, error: new Error(`Element not found: ${data.selector}`) };
+      return { success: false, error: String(new Error(`Element not found: ${data.selector}`)) };
     }
 
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

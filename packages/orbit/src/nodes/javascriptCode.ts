@@ -1,23 +1,19 @@
-import { JavascriptCodeNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { CDPService } from '../services/cdp';
-import { browser } from 'wxt/browser';
+import { JavascriptCodeNodeData, NodeType, Result } from './types';
 
-export default async function javascriptCode(data: JavascriptCodeNodeData): Promise<Result<any>> {
+export const javascriptCodeNode: NodeType<JavascriptCodeNodeData> = {
+  id: 'nodes:javascript-code',
+  name: 'javascriptCode',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: new Error('No active tab found') };
-    }
-    const tabId = tabs[0].id;
-
+    
     const expression = `
       (async () => {
         ${data.code}
       })();
     `;
 
-    const executeCode = CDPService.evaluate(tabId, expression);
+    const executeCode = context.browser.evaluate( expression);
 
     if (data.timeout && data.timeout > 0) {
       const timeoutPromise = new Promise((_, reject) => {
@@ -25,12 +21,15 @@ export default async function javascriptCode(data: JavascriptCodeNodeData): Prom
       });
       
       const result = await Promise.race([executeCode, timeoutPromise]);
-      return { success: true, value: result };
+      return { success: true, data: result };
     }
 
     const result = await executeCode;
-    return { success: true, value: result };
+    // Store result in context if needed
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

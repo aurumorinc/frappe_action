@@ -1,12 +1,15 @@
-import { SortDataNodeData } from '../models/nodes';
-import { Result, Engine } from '../services/action';
+import { SortDataNodeData, NodeType, Result } from './types';
 
-export default async function sortData(data: SortDataNodeData, engine: Engine): Promise<Result<void>> {
+export const sortDataNode: NodeType<SortDataNodeData> = {
+  id: 'nodes:sort-data',
+  name: 'sortData',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const arrayToSort = engine.scrapedData[data.dataKey];
+    const arrayToSort = context.engine.scrapedData[data.dataKey];
     
     if (!Array.isArray(arrayToSort)) {
-      return { success: false, error: new Error(`Data at key ${data.dataKey} is not an array`) };
+      return { success: false, error: String(new Error(`Data at key ${data.dataKey} is not an array`)) };
     }
 
     arrayToSort.sort((a, b) => {
@@ -23,10 +26,12 @@ export default async function sortData(data: SortDataNodeData, engine: Engine): 
       return 0;
     });
 
-    engine.scrapedData[data.dataKey] = arrayToSort;
+    context.engine.scrapedData[data.dataKey] = arrayToSort;
 
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

@@ -1,9 +1,26 @@
-export type NodeType =
-  | 'trigger'
-  | 'loop-breakpoint'
-  | 'hitl'
-  | 'sub-task'
-  | 'redirect'
+import { BrowserService } from '../services/browser';
+import { Engine } from './index';
+import { Todo } from '../models/todo/index';
+
+export interface Context {
+  browser: BrowserService;
+  engine: Engine;
+  state: Record<string, any>;
+  todo: Todo;
+}
+
+export interface NodeType<TData = any> {
+  id: string;
+  name: string;
+  description: string;
+  execute: (data: TData, context: Context) => Promise<Result<void>>;
+}
+
+export type Result<T> = { success: true; data: T; pause?: boolean } | { success: false; error: string };
+export type NodeTypeName =
+  | 'nodes:hitl'
+  | 'nodes:trigger'
+  | 'nodes:redirect'
   | 'nodes:get-text'
   | 'nodes:element-exists'
   | 'nodes:event-click'
@@ -34,7 +51,10 @@ export type NodeType =
   | 'nodes:export-data'
   | 'nodes:delete-data'
   | 'nodes:sort-data'
-  | 'nodes:workflow-state';
+  | 'nodes:workflow-state'
+  | 'nodes:act'
+  | 'nodes:extract'
+  | 'nodes:observe';
 
 export interface BaseSelectorNodeData {
   selector: string;
@@ -196,7 +216,23 @@ export interface HitlNodeData {
   data_key?: string;
 }
 
-export type NodeData<T extends NodeType> =
+export interface ActNodeData {
+  instruction: string;
+  variables?: Record<string, string>;
+}
+
+export interface ExtractNodeData {
+  instruction: string;
+  schema?: string;
+  variables?: Record<string, string>;
+}
+
+export interface ObserveNodeData {
+  instruction: string;
+  variables?: Record<string, string>;
+}
+
+export type NodeData<T extends NodeTypeName> =
   T extends 'hitl' ? HitlNodeData :
   T extends 'nodes:get-text' ? GetTextNodeData :
   T extends 'nodes:element-exists' ? ElementExistsNodeData :
@@ -229,4 +265,7 @@ export type NodeData<T extends NodeType> =
   T extends 'nodes:delete-data' ? DeleteDataNodeData :
   T extends 'nodes:sort-data' ? SortDataNodeData :
   T extends 'nodes:workflow-state' ? WorkflowStateNodeData :
+  T extends 'nodes:act' ? ActNodeData :
+  T extends 'nodes:extract' ? ExtractNodeData :
+  T extends 'nodes:observe' ? ObserveNodeData :
   Record<string, any>;

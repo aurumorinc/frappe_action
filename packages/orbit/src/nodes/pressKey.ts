@@ -1,16 +1,12 @@
-import { PressKeyNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { CDPService } from '../services/cdp';
-import { browser } from 'wxt/browser';
+import { PressKeyNodeData, NodeType, Result } from './types';
 
-export default async function pressKey(data: PressKeyNodeData, id: string): Promise<Result<void>> {
+export const pressKeyNode: NodeType<PressKeyNodeData> = {
+  id: 'nodes:press-key',
+  name: 'pressKey',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: new Error('No active tab found') };
-    }
-    const tabId = tabs[0].id;
-
+    
     if (data.selector) {
       // Focus the element first
       const expression = `
@@ -23,7 +19,7 @@ export default async function pressKey(data: PressKeyNodeData, id: string): Prom
           return false;
         })();
       `;
-      await CDPService.evaluate(tabId, expression);
+      await context.browser.evaluate( expression);
     }
 
     let modifiers = 0;
@@ -35,21 +31,23 @@ export default async function pressKey(data: PressKeyNodeData, id: string): Prom
     }
 
     // Send keyDown
-    await CDPService.sendCommand(tabId, 'Input.dispatchKeyEvent', {
+    await context.browser.sendCommand( 'Input.dispatchKeyEvent', {
       type: 'keyDown',
       key: data.key,
       modifiers
     });
 
     // Send keyUp
-    await CDPService.sendCommand(tabId, 'Input.dispatchKeyEvent', {
+    await context.browser.sendCommand( 'Input.dispatchKeyEvent', {
       type: 'keyUp',
       key: data.key,
       modifiers
     });
 
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

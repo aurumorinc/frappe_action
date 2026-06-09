@@ -1,53 +1,31 @@
-import { FormsNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { CDPService } from '../services/cdp';
-import { GhostCursor } from '../lib/ghost-cursor/spoof';
-import { MarkovTyper } from '../lib/human-typing/typer';
-import { browser } from 'wxt/browser';
+import { FormsNodeData, NodeType, Result } from './types';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export default async function forms(data: FormsNodeData, id: string): Promise<Result<void>> {
+export const formsNode: NodeType<FormsNodeData> = {
+  id: 'nodes:forms',
+  name: 'forms',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: new Error('No active tab found') };
-    }
-    const tabId = tabs[0].id;
-
-    const box = await CDPService.getBoundingBox(tabId, data.selector);
+    const box = await context.browser.getBoundingBox(data.selector);
     if (!box) {
-      return { success: false, error: new Error(`Element not found: ${data.selector}`) };
+      return { success: false, error: String(new Error(`Element not found: ${data.selector}`)) };
     }
 
-    const cursor = new GhostCursor(tabId);
-    
     // Move to the element and click to focus
-    await cursor.click(box);
+    await context.browser.clickBoundingBox(box);
 
     if (data.type === 'text') {
       if (data.clearValue) {
         // Select all and delete
-        await CDPService.sendCommand(tabId, 'Input.dispatchKeyEvent', { type: 'keyDown', commands: ['SelectAll'] });
-        await CDPService.sendCommand(tabId, 'Input.dispatchKeyEvent', { type: 'keyDown', key: 'Backspace' });
-        await CDPService.sendCommand(tabId, 'Input.dispatchKeyEvent', { type: 'keyUp', key: 'Backspace' });
+        await context.browser.sendCommand('Input.dispatchKeyEvent', { type: 'keyDown', commands: ['SelectAll'] });
+        await context.browser.sendCommand('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Backspace' });
+        await context.browser.sendCommand('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Backspace' });
       }
 
       if (data.value) {
-        const typer = new MarkovTyper(data.value);
-        const { history } = typer.run();
-
-        for (const event of history) {
-          await delay(event.delayMs);
-          
-          if (event.action === 'BACKSPACE') {
-            await CDPService.sendCommand(tabId, 'Input.dispatchKeyEvent', { type: 'keyDown', key: 'Backspace' });
-            await CDPService.sendCommand(tabId, 'Input.dispatchKeyEvent', { type: 'keyUp', key: 'Backspace' });
-          } else if (event.char) {
-            await CDPService.sendCommand(tabId, 'Input.dispatchKeyEvent', { type: 'keyDown', text: event.char });
-            await CDPService.sendCommand(tabId, 'Input.dispatchKeyEvent', { type: 'keyUp', text: event.char });
-          }
-        }
+        await context.browser.type(data.value);
       }
     } else if (data.type === 'checkbox' || data.type === 'radio') {
       // For checkbox and radio, the initial click() above already toggled it.
@@ -55,11 +33,11 @@ export default async function forms(data: FormsNodeData, id: string): Promise<Re
       // we should check its current state first.
       if (data.value !== undefined) {
         const targetState = data.value === 'true';
-        const currentState = await CDPService.evaluate(tabId, `document.querySelector('${data.selector.replace(/'/g, "\\'")}').checked`);
+        const currentState = await context.browser.evaluate(`document.querySelector('${data.selector.replace(/'/g, "\\'")}').checked`);
         
         if (currentState !== targetState) {
           // Click again to toggle to the desired state
-          await cursor.click(box);
+          await context.browser.clickBoundingBox(box);
         }
       }
     } else if (data.type === 'select') {
@@ -96,21 +74,23 @@ export default async function forms(data: FormsNodeData, id: string): Promise<Re
           })();
         `;
         
-        const optionBox = await CDPService.evaluate(tabId, optionExpression);
+        const optionBox = await context.browser.evaluate(optionExpression);
         
         if (optionBox && !optionBox.fallback) {
-          await cursor.click(optionBox);
+          await context.browser.clickBoundingBox(optionBox);
         }
       }
     }
 
     if (data.submitForm) {
-      await CDPService.sendCommand(tabId, 'Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter' });
-      await CDPService.sendCommand(tabId, 'Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter' });
+      await context.browser.sendCommand('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter' });
+      await context.browser.sendCommand('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter' });
     }
 
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

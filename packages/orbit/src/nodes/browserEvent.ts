@@ -1,8 +1,11 @@
-import { BrowserEventNodeData } from '../models/nodes';
-import { Result } from '../services/action';
+import { BrowserEventNodeData, NodeType, Result } from './types';
 import { browser } from 'wxt/browser';
 
-export default async function browserEvent(data: BrowserEventNodeData): Promise<Result<void>> {
+export const browserEventNode: NodeType<BrowserEventNodeData> = {
+  id: 'nodes:browser-event',
+  name: 'browserEvent',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
     return new Promise((resolve) => {
       let timeoutId: ReturnType<typeof setTimeout>;
@@ -11,7 +14,7 @@ export default async function browserEvent(data: BrowserEventNodeData): Promise<
         if (changeInfo.status === 'complete') {
           browser.tabs.onUpdated.removeListener(listener);
           if (timeoutId) clearTimeout(timeoutId);
-          resolve({ success: true, value: undefined });
+          resolve({ success: true, data: undefined });
         }
       };
 
@@ -20,11 +23,13 @@ export default async function browserEvent(data: BrowserEventNodeData): Promise<
       if (data.timeout && data.timeout > 0) {
         timeoutId = setTimeout(() => {
           browser.tabs.onUpdated.removeListener(listener);
-          resolve({ success: false, error: new Error(`Browser event timed out after ${data.timeout}ms`) });
+          resolve({ success: false, error: `Browser event timed out after ${data.timeout}ms` });
         }, data.timeout);
       }
     });
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

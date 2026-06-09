@@ -1,16 +1,21 @@
-import { WorkflowStateNodeData } from '../models/nodes';
-import { Result, Engine } from '../services/action';
+import { WorkflowStateNodeData, NodeType, Result } from './types';
 
-export default async function workflowState(data: WorkflowStateNodeData, engine: Engine): Promise<Result<void>> {
+export const workflowStateNode: NodeType<WorkflowStateNodeData> = {
+  id: 'nodes:workflow-state',
+  name: 'workflowState',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
     if (data.variables && typeof data.variables === 'object') {
-      engine.scrapedData = {
-        ...engine.scrapedData,
+      context.engine.scrapedData = {
+        ...context.engine.scrapedData,
         ...data.variables
       };
     }
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

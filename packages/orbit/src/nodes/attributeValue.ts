@@ -1,16 +1,12 @@
-import { AttributeValueNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { CDPService } from '../services/cdp';
-import { browser } from 'wxt/browser';
+import { AttributeValueNodeData, NodeType, Result } from './types';
 
-export default async function attributeValue(data: AttributeValueNodeData, id: string): Promise<Result<string | string[] | void>> {
+export const attributeValueNode: NodeType<AttributeValueNodeData> = {
+  id: 'nodes:attribute-value',
+  name: 'attributeValue',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: new Error('No active tab found') };
-    }
-    const tabId = tabs[0].id;
-
+    
     if (data.action === 'get') {
       const expression = `
         (() => {
@@ -19,9 +15,10 @@ export default async function attributeValue(data: AttributeValueNodeData, id: s
           return elements.map(el => el.getAttribute('${data.attributeName.replace(/'/g, "\\'")}') || '');
         })();
       `;
-      const result = await CDPService.evaluate(tabId, expression);
-      if (!result) return { success: false, error: new Error(`Element not found: ${data.selector}`) };
-      return { success: true, value: data.multiple ? result : result[0] };
+      const result = await context.browser.evaluate( expression);
+      if (!result) return { success: false, error: String(new Error(`Element not found: ${data.selector}`)) };
+      // Store result in context if needed, but return void for now
+      return { success: true, data: undefined };
     } else if (data.action === 'set' && data.attributeValue !== undefined) {
       const expression = `
         (() => {
@@ -31,13 +28,15 @@ export default async function attributeValue(data: AttributeValueNodeData, id: s
           return true;
         })();
       `;
-      const success = await CDPService.evaluate(tabId, expression);
-      if (!success) return { success: false, error: new Error(`Element not found: ${data.selector}`) };
-      return { success: true, value: undefined };
+      const success = await context.browser.evaluate( expression);
+      if (!success) return { success: false, error: String(new Error(`Element not found: ${data.selector}`)) };
+      return { success: true, data: undefined };
     }
 
-    return { success: false, error: new Error('Invalid action or missing attributeValue') };
+    return { success: false, error: String(new Error('Invalid action or missing attributeValue')) };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

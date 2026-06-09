@@ -1,16 +1,12 @@
-import { ElementExistsNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { CDPService } from '../services/cdp';
-import { browser } from 'wxt/browser';
+import { ElementExistsNodeData, NodeType, Result } from './types';
 
-export default async function elementExists(data: ElementExistsNodeData): Promise<Result<boolean>> {
+export const elementExistsNode: NodeType<ElementExistsNodeData> = {
+  id: 'nodes:element-exists',
+  name: 'elementExists',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: new Error('No active tab found') };
-    }
-    const tabId = tabs[0].id;
-
+    
     const expression = `!!document.querySelector('${data.selector.replace(/'/g, "\\'")}')`;
     
     // Basic wait logic
@@ -19,13 +15,16 @@ export default async function elementExists(data: ElementExistsNodeData): Promis
     const start = Date.now();
 
     while (Date.now() - start < timeout) {
-      exists = await CDPService.evaluate(tabId, expression);
+      exists = await context.browser.evaluate( expression);
       if (exists || !data.waitForSelector) break;
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 
-    return { success: true, value: exists };
+    // Store exists in context if needed
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

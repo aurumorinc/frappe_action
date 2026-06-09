@@ -1,8 +1,13 @@
-import { LoopDataNodeData } from '../models/nodes';
-import { Result } from '../services/action';
+import { LoopDataNodeData, NodeType, Result } from './types';
 
-export default async function loopData(data: LoopDataNodeData): Promise<Result<void>> {
+export const loopDataNode: NodeType<LoopDataNodeData> = {
+  id: 'nodes:loop-data',
+  name: 'loopData',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   // This node primarily interacts with the engine state in the background.
   // In the content script context, it might just be a no-op or return a signal.
-  return { success: true, value: undefined };
+  return { success: true, data: undefined };
 }
+
+};

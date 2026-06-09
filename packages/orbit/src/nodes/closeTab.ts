@@ -1,8 +1,10 @@
-import { CloseTabNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { browser } from 'wxt/browser';
+import { CloseTabNodeData, NodeType, Result } from './types';
 
-export default async function closeTab(data: CloseTabNodeData): Promise<Result<void>> {
+export const closeTabNode: NodeType<CloseTabNodeData> = {
+  id: 'nodes:close-tab',
+  name: 'closeTab',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
     if (data.closeType === 'window') {
       if (data.allWindows) {
@@ -22,8 +24,10 @@ export default async function closeTab(data: CloseTabNodeData): Promise<Result<v
       }
     }
 
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};
