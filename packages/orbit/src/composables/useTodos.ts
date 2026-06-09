@@ -1,9 +1,10 @@
 import { ref, computed, markRaw } from 'vue';
 import { getSites } from '../services/auth';
-import { updateTodoStatus, fetchActionGraph } from '../services/api';
-import { startAction } from '../services/extension';
+import { updateTodoStatus } from '../repositories/todo';
+import { fetchActionGraph } from '../repositories/todo/index';
+import { startAction } from '../messaging/client';
 import TaskIcon from '../icons/TaskIcon.vue';
-import logger from '../utils/logger';
+import logger from '../utils/logging';
 
 export function useTodos() {
   const actions = ref<any[]>([]);
@@ -105,9 +106,13 @@ export function useTodos() {
   async function fetchSubTodos(parentTodo: any) {
     isLoading.value = true;
     try {
-      const { fetchSubTodosFromSite } = await import('../services/api');
-      const rawSubTasks = await fetchSubTodosFromSite(parentTodo.site, parentTodo.name);
-      subTasks.value = rawSubTasks.map((todo: any) => mapTodoToAction(todo, parentTodo.site));
+      const { fetchSubTodosFromSite } = await import('../repositories/todo');
+      const result = await fetchSubTodosFromSite(parentTodo.site, parentTodo.name);
+      if (result.success) {
+        subTasks.value = result.data.map((todo: any) => mapTodoToAction(todo, parentTodo.site));
+      } else {
+        subTasks.value = [];
+      }
     } catch (error) {
       logger.error({ err: error }, "Error fetching sub todos");
     } finally {
@@ -117,9 +122,9 @@ export function useTodos() {
 
   async function selectTodo(todo: any) {
     if (todo.action) {
-      const actionData = await fetchActionGraph(todo.site, todo.action);
-      if (actionData && actionData.compiled_json) {
-        startAction(todo, JSON.parse(actionData.compiled_json));
+      const result = await fetchActionGraph(todo.site, todo.action);
+      if (result.success && result.data && result.data.compiled_json) {
+        startAction(todo, JSON.parse(result.data.compiled_json));
       }
     } else {
       navigationStack.value.push(todo);
@@ -129,9 +134,9 @@ export function useTodos() {
 
   async function run(todo: any) {
     if (todo.action) {
-      const actionData = await fetchActionGraph(todo.site, todo.action);
-      if (actionData && actionData.compiled_json) {
-        startAction(todo, JSON.parse(actionData.compiled_json));
+      const result = await fetchActionGraph(todo.site, todo.action);
+      if (result.success && result.data && result.data.compiled_json) {
+        startAction(todo, JSON.parse(result.data.compiled_json));
       }
     }
   }
@@ -142,11 +147,11 @@ export function useTodos() {
     const todosToRun: any[] = [];
     for (const action of visibleActions.value) {
       if (!action.completed && action.action) {
-        const actionData = await fetchActionGraph(action.site, action.action);
-        if (actionData && actionData.compiled_json) {
+        const result = await fetchActionGraph(action.site, action.action);
+        if (result.success && result.data && result.data.compiled_json) {
           todosToRun.push({
             todo: action,
-            compiled_json: JSON.parse(actionData.compiled_json)
+            compiled_json: JSON.parse(result.data.compiled_json)
           });
         }
       }
@@ -209,13 +214,17 @@ export function useTodos() {
       
       hasAuthenticatedSites.value = true;
       
-      const { fetchReportFromSites, fetchOpenTodosFromSites } = await import('../services/api');
+      const { fetchReportFromSites, fetchOpenTodosFromSites } = await import('../repositories/todo');
       
-      const report = await fetchReportFromSites(sites);
-      reportData.value = { totalOpen: report.totalOpen, completedToday: report.completedToday };
+      const reportResult = await fetchReportFromSites(sites);
+      if (reportResult.success) {
+        reportData.value = { totalOpen: reportResult.data.totalOpen, completedToday: reportResult.data.completedToday };
+      }
       
-      const allTodos = await fetchOpenTodosFromSites(sites);
-      actions.value = allTodos.map((todo: any) => mapTodoToAction(todo, todo.site));
+      const allTodosResult = await fetchOpenTodosFromSites(sites);
+      if (allTodosResult.success) {
+        actions.value = allTodosResult.data.map((todo: any) => mapTodoToAction(todo, todo.site));
+      }
       
     } catch (error) {
       logger.error({ err: error }, "Error fetching sites or todos");

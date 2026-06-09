@@ -1,37 +1,35 @@
-import { UploadFileNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { CDPService } from '../services/cdp';
-import { browser } from 'wxt/browser';
+import { UploadFileNodeData, NodeType, Result } from './types';
 
-export default async function uploadFile(data: UploadFileNodeData, id: string): Promise<Result<void>> {
+export const uploadFileNode: NodeType<UploadFileNodeData> = {
+  id: 'nodes:upload-file',
+  name: 'uploadFile',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: new Error('No active tab found') };
-    }
-    const tabId = tabs[0].id;
-
+    
     // Get the objectId of the file input element
     const expression = `document.querySelector('${data.selector.replace(/'/g, "\\'")}')`;
-    const result = await CDPService.sendCommand(tabId, 'Runtime.evaluate', {
+    const result = await context.browser.sendCommand( 'Runtime.evaluate', {
       expression,
       returnByValue: false
     });
 
     if (!result.result || !result.result.objectId) {
-      return { success: false, error: new Error(`Element not found: ${data.selector}`) };
+      return { success: false, error: String(new Error(`Element not found: ${data.selector}`)) };
     }
 
     const objectId = result.result.objectId;
 
     // Use CDP to set the files natively
-    await CDPService.sendCommand(tabId, 'DOM.setFileInputFiles', {
+    await context.browser.sendCommand( 'DOM.setFileInputFiles', {
       files: data.filePaths,
       objectId
     });
 
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

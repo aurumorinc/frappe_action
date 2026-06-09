@@ -1,13 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useTodos } from '../../../src/composables/useTodos';
 import * as authService from '../../../src/services/auth';
-import * as apiService from '../../../src/services/api';
-
+import * as todoRepo from '../../../src/repositories/todo/index';
 vi.mock('../../../src/services/auth', () => ({
   getSites: vi.fn()
 }));
 
-vi.mock('../../../src/services/api', () => ({
+vi.mock('../../../src/repositories/todo/index', () => ({
   fetchReportFromSites: vi.fn(),
   fetchOpenTodosFromSites: vi.fn(),
   fetchSubTodosFromSite: vi.fn(),
@@ -15,7 +14,7 @@ vi.mock('../../../src/services/api', () => ({
   fetchActionGraph: vi.fn()
 }));
 
-vi.mock('../../../src/services/extension', () => ({
+vi.mock('../../../src/messaging/client', () => ({
   startAction: vi.fn()
 }));
 
@@ -38,13 +37,13 @@ describe('useTodos.ts', () => {
     const mockSites = [{ url: 'http://test', accessToken: 'token' }];
     vi.mocked(authService.getSites).mockResolvedValueOnce(mockSites as any);
     
-    const mockReport = { totalOpen: 2, completedToday: 1 };
-    vi.mocked(apiService.fetchReportFromSites).mockResolvedValueOnce(mockReport);
+    const mockReport = { success: true, data: { totalOpen: 2, completedToday: 1 } };
+    vi.mocked(todoRepo.fetchReportFromSites).mockResolvedValueOnce(mockReport as any);
 
-    const mockTodos = [
+    const mockTodos = { success: true, data: [
       { name: 'parent', status: 'Open' }
-    ];
-    vi.mocked(apiService.fetchOpenTodosFromSites).mockResolvedValueOnce(mockTodos);
+    ] };
+    vi.mocked(todoRepo.fetchOpenTodosFromSites).mockResolvedValueOnce(mockTodos as any);
     
     const { fetchTodos, actions, visibleActions, reportData } = useTodos();
     
@@ -65,20 +64,20 @@ describe('useTodos.ts', () => {
     await skip('todo1');
     
     expect(actions.value[0].completed).toBe(true);
-    expect(apiService.updateTodoStatus).toHaveBeenCalledWith({}, 'todo1', 'Cancelled');
+    expect(todoRepo.updateTodoStatus).toHaveBeenCalledWith({}, 'todo1', 'Cancelled');
   });
 
   it('test_mapTodoToAction_strips_html', async () => {
     const mockSites = [{ url: 'http://test', accessToken: 'token' }];
     vi.mocked(authService.getSites).mockResolvedValueOnce(mockSites as any);
     
-    const mockReport = { totalOpen: 1, completedToday: 0 };
-    vi.mocked(apiService.fetchReportFromSites).mockResolvedValueOnce(mockReport);
+    const mockReport = { success: true, data: { totalOpen: 1, completedToday: 0 } };
+    vi.mocked(todoRepo.fetchReportFromSites).mockResolvedValueOnce(mockReport as any);
 
-    const mockTodos = [
+    const mockTodos = { success: true, data: [
       { name: 'todo1', description: '<div class="ql-editor"><p>Go to linkedin</p></div>', status: 'Open' }
-    ];
-    vi.mocked(apiService.fetchOpenTodosFromSites).mockResolvedValueOnce(mockTodos);
+    ] };
+    vi.mocked(todoRepo.fetchOpenTodosFromSites).mockResolvedValueOnce(mockTodos as any);
     
     const { fetchTodos, actions } = useTodos();
     

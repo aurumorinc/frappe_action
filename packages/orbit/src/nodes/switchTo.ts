@@ -1,7 +1,10 @@
-import { SwitchToNodeData } from '../models/nodes';
-import { Result } from '../services/action';
+import { SwitchToNodeData, NodeType, Result } from './types';
 
-export default async function switchTo(data: SwitchToNodeData): Promise<Result<void>> {
+export const switchToNode: NodeType<SwitchToNodeData> = {
+  id: 'nodes:switch-to',
+  name: 'switchTo',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
     // In the context of the content script, switching to an iframe is handled
     // by passing the frameSelector to subsequent handleSelector calls.
@@ -10,8 +13,10 @@ export default async function switchTo(data: SwitchToNodeData): Promise<Result<v
     
     // For now, we'll just return success. The engine should store this frameSelector
     // and pass it to subsequent nodes.
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

@@ -1,12 +1,15 @@
-import { ExportDataNodeData } from '../models/nodes';
-import { Result, Engine } from '../services/action';
+import { ExportDataNodeData, NodeType, Result } from './types';
 import { browser } from 'wxt/browser';
 
-export default async function exportData(data: ExportDataNodeData, engine: Engine): Promise<Result<void>> {
+export const exportDataNode: NodeType<ExportDataNodeData> = {
+  id: 'nodes:export-data',
+  name: 'exportData',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const exportData = engine.scrapedData[data.dataKey];
+    const exportData = context.engine.scrapedData[data.dataKey];
     if (!exportData) {
-      return { success: false, error: new Error(`No data found for key: ${data.dataKey}`) };
+      return { success: false, error: String(new Error(`No data found for key: ${data.dataKey}`)) };
     }
 
     let content = '';
@@ -29,7 +32,7 @@ export default async function exportData(data: ExportDataNodeData, engine: Engin
       mimeType = 'text/csv';
       extension = 'csv';
     } else {
-      return { success: false, error: new Error(`Unsupported export format: ${data.format}`) };
+      return { success: false, error: String(new Error(`Unsupported export format: ${data.format}`)) };
     }
 
     const blob = new Blob([content], { type: mimeType });
@@ -44,8 +47,10 @@ export default async function exportData(data: ExportDataNodeData, engine: Engin
     // Clean up the URL after a short delay
     setTimeout(() => URL.revokeObjectURL(url), 10000);
 
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

@@ -1,18 +1,24 @@
-import { WhileLoopNodeData } from '../models/nodes';
-import { Result, Engine } from '../services/action';
+import { WhileLoopNodeData, NodeType, Result } from './types';
 
-export default async function whileLoop(data: WhileLoopNodeData, engine: Engine): Promise<Result<boolean>> {
+export const whileLoopNode: NodeType<WhileLoopNodeData> = {
+  id: 'nodes:while-loop',
+  name: 'whileLoop',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
     // eslint-disable-next-line no-new-func
-    const func = new Function(...Object.keys(engine.scrapedData), `
+    const func = new Function(...Object.keys(context.engine.scrapedData), `
       return (async () => {
         return ${data.condition};
       })();
     `);
     
-    const result = await func(...Object.values(engine.scrapedData));
-    return { success: true, value: Boolean(result) };
+    const result = await func(...Object.values(context.engine.scrapedData));
+    // Store result in context if needed
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

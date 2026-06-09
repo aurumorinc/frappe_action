@@ -1,21 +1,19 @@
-import handleSelector from './handleSelector';
-import { TakeScreenshotNodeData } from '../models/nodes';
-import { Result } from '../services/action';
+import { TakeScreenshotNodeData, NodeType, Result } from './types';
 import { browser } from 'wxt/browser';
 
-export default async function takeScreenshot(data: TakeScreenshotNodeData, id: string): Promise<Result<void>> {
+export const takeScreenshotNode: NodeType<TakeScreenshotNodeData> = {
+  id: 'nodes:take-screenshot',
+  name: 'takeScreenshot',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    let rect: DOMRect | undefined;
+    let rect: any;
 
     if (data.selector && !data.fullPage) {
-      await handleSelector(
-        { data, id },
-        {
-          onSelected(element: Element) {
-            rect = element.getBoundingClientRect();
-          },
-        }
-      );
+      const box = await context.browser.getBoundingBox(data.selector);
+      if (box) {
+        rect = box;
+      }
     }
 
     // Send message to background script to capture the tab
@@ -32,8 +30,10 @@ export default async function takeScreenshot(data: TakeScreenshotNodeData, id: s
       }
     });
 
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

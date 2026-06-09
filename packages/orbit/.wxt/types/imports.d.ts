@@ -19,7 +19,6 @@ declare global {
   const defineContentScript: typeof import('wxt/utils/define-content-script').defineContentScript
   const defineUnlistedScript: typeof import('wxt/utils/define-unlisted-script').defineUnlistedScript
   const defineWxtPlugin: typeof import('wxt/utils/define-wxt-plugin').defineWxtPlugin
-  const domObserver: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/dom_observer').domObserver
   const effectScope: typeof import('vue').effectScope
   const fakeBrowser: typeof import('wxt/testing').fakeBrowser
   const getAppConfig: typeof import('wxt/utils/app-config').getAppConfig
@@ -34,9 +33,8 @@ declare global {
   const isReadonly: typeof import('vue').isReadonly
   const isRef: typeof import('vue').isRef
   const isShallow: typeof import('vue').isShallow
-  const logger: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logger').default
+  const logging: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logging').default
   const markRaw: typeof import('vue').markRaw
-  const networkObserver: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/network_observer').networkObserver
   const nextTick: typeof import('vue').nextTick
   const onActivated: typeof import('vue').onActivated
   const onBeforeMount: typeof import('vue').onBeforeMount
@@ -52,13 +50,13 @@ declare global {
   const onUnmounted: typeof import('vue').onUnmounted
   const onUpdated: typeof import('vue').onUpdated
   const onWatcherCleanup: typeof import('vue').onWatcherCleanup
-  const processTelemetry: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logger').processTelemetry
+  const processTelemetry: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logging').processTelemetry
   const provide: typeof import('vue').provide
   const reactive: typeof import('vue').reactive
   const readonly: typeof import('vue').readonly
   const ref: typeof import('vue').ref
   const resolveComponent: typeof import('vue').resolveComponent
-  const sanitizeUrl: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logger').sanitizeUrl
+  const sanitizeUrl: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logging').sanitizeUrl
   const shallowReactive: typeof import('vue').shallowReactive
   const shallowReadonly: typeof import('vue').shallowReadonly
   const shallowRef: typeof import('vue').shallowRef
@@ -67,7 +65,7 @@ declare global {
   const toRef: typeof import('vue').toRef
   const toRefs: typeof import('vue').toRefs
   const toValue: typeof import('vue').toValue
-  const transmitTelemetry: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logger').transmitTelemetry
+  const transmitTelemetry: typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logging').transmitTelemetry
   const triggerRef: typeof import('vue').triggerRef
   const unref: typeof import('vue').unref
   const useAppConfig: typeof import('wxt/utils/app-config').useAppConfig
@@ -116,12 +114,6 @@ declare global {
   // @ts-ignore
   export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
-  // @ts-ignore
-  export type { DomObserverConfig } from '/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/dom_observer'
-  import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/dom_observer')
-  // @ts-ignore
-  export type { NetworkObserverConfig } from '/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/network_observer'
-  import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/network_observer')
 }
 // for vue template auto import
 import { UnwrapRef } from 'vue'
@@ -145,7 +137,6 @@ declare module 'vue' {
     readonly defineContentScript: UnwrapRef<typeof import('wxt/utils/define-content-script')['defineContentScript']>
     readonly defineUnlistedScript: UnwrapRef<typeof import('wxt/utils/define-unlisted-script')['defineUnlistedScript']>
     readonly defineWxtPlugin: UnwrapRef<typeof import('wxt/utils/define-wxt-plugin')['defineWxtPlugin']>
-    readonly domObserver: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/dom_observer')['domObserver']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly fakeBrowser: UnwrapRef<typeof import('wxt/testing')['fakeBrowser']>
     readonly getAppConfig: UnwrapRef<typeof import('wxt/utils/app-config')['getAppConfig']>
@@ -160,9 +151,8 @@ declare module 'vue' {
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly isShallow: UnwrapRef<typeof import('vue')['isShallow']>
-    readonly logger: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logger')['default']>
+    readonly logging: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logging')['default']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
-    readonly networkObserver: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/network_observer')['networkObserver']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
     readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
     readonly onBeforeMount: UnwrapRef<typeof import('vue')['onBeforeMount']>
@@ -178,13 +168,13 @@ declare module 'vue' {
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
-    readonly processTelemetry: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logger')['processTelemetry']>
+    readonly processTelemetry: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logging')['processTelemetry']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
-    readonly sanitizeUrl: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logger')['sanitizeUrl']>
+    readonly sanitizeUrl: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logging')['sanitizeUrl']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
@@ -193,7 +183,7 @@ declare module 'vue' {
     readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
     readonly toRefs: UnwrapRef<typeof import('vue')['toRefs']>
     readonly toValue: UnwrapRef<typeof import('vue')['toValue']>
-    readonly transmitTelemetry: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logger')['transmitTelemetry']>
+    readonly transmitTelemetry: UnwrapRef<typeof import('/home/aquiveal/repositories/aquiveal/frappe_bench/apps/frappe_orbit/packages/orbit/src/utils/logging')['transmitTelemetry']>
     readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAppConfig: UnwrapRef<typeof import('wxt/utils/app-config')['useAppConfig']>

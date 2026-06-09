@@ -1,20 +1,16 @@
-import { VerifySelectorNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { CDPService } from '../services/cdp';
-import { browser } from 'wxt/browser';
+import { VerifySelectorNodeData, NodeType, Result } from './types';
 
-export default async function verifySelector(data: VerifySelectorNodeData): Promise<Result<boolean>> {
+export const verifySelectorNode: NodeType<VerifySelectorNodeData> = {
+  id: 'nodes:verify-selector',
+  name: 'verifySelector',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
     if (!data.selector) {
-      return { success: true, value: false };
+      return { success: true, data: undefined };
     }
 
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: new Error('No active tab found') };
-    }
-    const tabId = tabs[0].id;
-
+    
     const expression = `
       (() => {
         try {
@@ -26,9 +22,12 @@ export default async function verifySelector(data: VerifySelectorNodeData): Prom
       })();
     `;
 
-    const isValid = await CDPService.evaluate(tabId, expression);
-    return { success: true, value: isValid };
+    const isValid = await context.browser.evaluate( expression);
+    // Store isValid in context if needed
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

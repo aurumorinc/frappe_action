@@ -1,27 +1,23 @@
-import { HoverElementNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { CDPService } from '../services/cdp';
-import { GhostCursor } from '../lib/ghost-cursor/spoof';
-import { browser } from 'wxt/browser';
+import { HoverElementNodeData, NodeType, Result } from './types';
 
-export default async function hoverElement(data: HoverElementNodeData, id: string): Promise<Result<void>> {
+export const hoverElementNode: NodeType<HoverElementNodeData> = {
+  id: 'nodes:hover-element',
+  name: 'hoverElement',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: new Error('No active tab found') };
-    }
-    const tabId = tabs[0].id;
-
-    const box = await CDPService.getBoundingBox(tabId, data.selector);
+    
+    const box = await context.browser.getBoundingBox( data.selector);
     if (!box) {
-      return { success: false, error: new Error(`Element not found: ${data.selector}`) };
+      return { success: false, error: String(new Error(`Element not found: ${data.selector}`)) };
     }
 
-    const cursor = new GhostCursor(tabId);
-    await cursor.move(box);
+    await context.browser.hoverBoundingBox(box);
 
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

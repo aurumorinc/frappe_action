@@ -1,7 +1,4 @@
-import { TriggerEventNodeData } from '../models/nodes';
-import { Result } from '../services/action';
-import { CDPService } from '../services/cdp';
-import { browser } from 'wxt/browser';
+import { TriggerEventNodeData, NodeType, Result } from './types';
 
 /**
  * Triggers a custom event on an element.
@@ -12,14 +9,13 @@ import { browser } from 'wxt/browser';
  * native user interactions (like 'click', 'change', 'input'). For native interactions,
  * use the `eventClick` or `forms` nodes which utilize CDP for full stealth compliance.
  */
-export default async function triggerEvent(data: TriggerEventNodeData, id: string): Promise<Result<void>> {
+export const triggerEventNode: NodeType<TriggerEventNodeData> = {
+  id: 'nodes:trigger-event',
+  name: 'triggerEvent',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: new Error('No active tab found') };
-    }
-    const tabId = tabs[0].id;
-
+    
     let eventParams = '{}';
     if (data.eventParams) {
       try {
@@ -43,14 +39,16 @@ export default async function triggerEvent(data: TriggerEventNodeData, id: strin
       })();
     `;
 
-    const success = await CDPService.evaluate(tabId, expression);
+    const success = await context.browser.evaluate( expression);
 
     if (!success) {
-      return { success: false, error: new Error(`Element not found: ${data.selector}`) };
+      return { success: false, error: String(new Error(`Element not found: ${data.selector}`)) };
     }
 
-    return { success: true, value: undefined };
+    return { success: true, data: undefined };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

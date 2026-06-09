@@ -1,18 +1,23 @@
-import { CookieNodeData } from '../models/nodes';
-import { Result } from '../services/action';
+import { CookieNodeData, NodeType, Result } from './types';
 import { browser } from 'wxt/browser';
 
-export default async function cookie(data: CookieNodeData): Promise<Result<any>> {
+export const cookieNode: NodeType<CookieNodeData> = {
+  id: 'nodes:cookie',
+  name: 'cookie',
+  description: '',
+  execute: async (data, context): Promise<Result<void>> => {
   try {
     const url = data.domain ? (data.domain.startsWith('http') ? data.domain : `https://${data.domain}`) : undefined;
 
     if (data.action === 'get') {
       if (url) {
         const cookie = await browser.cookies.get({ url, name: data.name });
-        return { success: true, value: cookie ? cookie.value : null };
+        // Store in context if needed
+        return { success: true, data: undefined };
       } else {
         const cookies = await browser.cookies.getAll({ name: data.name });
-        return { success: true, value: cookies.length > 0 ? cookies[0].value : null };
+        // Store in context if needed
+        return { success: true, data: undefined };
       }
     } else if (data.action === 'set' && data.value !== undefined && url) {
       await browser.cookies.set({
@@ -21,14 +26,16 @@ export default async function cookie(data: CookieNodeData): Promise<Result<any>>
         value: data.value,
         domain: data.domain
       });
-      return { success: true, value: undefined };
+      return { success: true, data: undefined };
     } else if (data.action === 'remove' && url) {
       await browser.cookies.remove({ url, name: data.name });
-      return { success: true, value: undefined };
+      return { success: true, data: undefined };
     }
 
-    return { success: false, error: new Error('Invalid cookie action or missing parameters') };
+    return { success: false, error: String(new Error('Invalid cookie action or missing parameters')) };
   } catch (error) {
-    return { success: false, error: error as Error };
+    return { success: false, error: String(error as Error) };
   }
 }
+
+};

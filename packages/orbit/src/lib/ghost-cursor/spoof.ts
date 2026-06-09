@@ -12,8 +12,8 @@ import {
   scale,
   extrapolate
 } from './math';
-import { CDPService } from '../../services/cdp';
-import baseLogger from '../../utils/logger';
+import { CDPService } from '../../repositories/browser/cdp';
+import baseLogger from '../../utils/logging';
 
 const log = baseLogger.child({ context: 'ghost-cursor' });
 
