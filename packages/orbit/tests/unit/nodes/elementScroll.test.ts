@@ -1,43 +1,42 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import elementScroll from '../../../src/nodes/elementScroll';
-import { CDPService } from '../../../src/services/cdp';
-import { browser } from 'wxt/browser';
-
-vi.mock('wxt/browser', () => ({
-  browser: {
-    tabs: {
-      query: vi.fn(),
-    },
-  },
-}));
-
-vi.mock('../../../src/services/cdp', () => ({
-  CDPService: {
-    getBoundingBox: vi.fn(),
-    evaluate: vi.fn(),
-    sendCommand: vi.fn(),
-  },
-}));
+import { elementScrollNode } from '../../../src/nodes/elementScroll';
+import { BrowserService } from '../../../src/services/browser/index';
+import { Context } from '../../../src/nodes/types';
 
 describe('elementScroll node', () => {
+  let mockBrowserService: any;
+  let mockContext: Context;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(browser.tabs.query).mockResolvedValue([{ id: 1, active: true, currentWindow: true } as any] as any);
+    
+    mockBrowserService = {
+      getBoundingBox: vi.fn(),
+      evaluate: vi.fn(),
+      sendCommand: vi.fn(),
+    };
+
+    mockContext = {
+      browser: mockBrowserService as unknown as BrowserService,
+      engine: {} as any,
+      state: {},
+      todo: {} as any,
+    };
   });
 
   it('should scroll from the center of the viewport if no selector is provided', async () => {
-    vi.mocked(CDPService.evaluate).mockResolvedValue({ width: 1000, height: 800 });
+    mockBrowserService.evaluate.mockResolvedValue({ width: 1000, height: 800 });
 
-    const result = await elementScroll({
+    const result = await elementScrollNode.execute({
       selector: '',
       scrollX: 100,
       scrollY: 200,
       smooth: true,
-    }, '1');
+    }, mockContext);
 
     expect(result.success).toBe(true);
-    expect(CDPService.evaluate).toHaveBeenCalledWith(1, `({ width: window.innerWidth, height: window.innerHeight })`);
-    expect(CDPService.sendCommand).toHaveBeenCalledWith(1, 'Input.synthesizeScrollGesture', {
+    expect(mockBrowserService.evaluate).toHaveBeenCalledWith(`({ width: window.innerWidth, height: window.innerHeight })`);
+    expect(mockBrowserService.sendCommand).toHaveBeenCalledWith('Input.synthesizeScrollGesture', {
       x: 500,
       y: 400,
       xDistance: 100,
@@ -50,18 +49,18 @@ describe('elementScroll node', () => {
   });
 
   it('should scroll from the center of the element if a selector is provided', async () => {
-    vi.mocked(CDPService.getBoundingBox).mockResolvedValue({ x: 100, y: 100, width: 200, height: 50 });
+    mockBrowserService.getBoundingBox.mockResolvedValue({ x: 100, y: 100, width: 200, height: 50 });
 
-    const result = await elementScroll({
+    const result = await elementScrollNode.execute({
       selector: '.my-element',
       scrollX: 0,
       scrollY: 500,
       smooth: false,
-    }, '1');
+    }, mockContext);
 
     expect(result.success).toBe(true);
-    expect(CDPService.getBoundingBox).toHaveBeenCalledWith(1, '.my-element');
-    expect(CDPService.sendCommand).toHaveBeenCalledWith(1, 'Input.synthesizeScrollGesture', {
+    expect(mockBrowserService.getBoundingBox).toHaveBeenCalledWith('.my-element');
+    expect(mockBrowserService.sendCommand).toHaveBeenCalledWith('Input.synthesizeScrollGesture', {
       x: 200, // 100 + 200/2
       y: 125, // 100 + 50/2
       xDistance: 0,
@@ -74,18 +73,18 @@ describe('elementScroll node', () => {
   });
 
   it('should return an error if the element is not found', async () => {
-    vi.mocked(CDPService.getBoundingBox).mockResolvedValue(null);
+    mockBrowserService.getBoundingBox.mockResolvedValue(null);
 
-    const result = await elementScroll({
+    const result = await elementScrollNode.execute({
       selector: '.missing-element',
       scrollX: 0,
       scrollY: 100,
-    }, '1');
+    }, mockContext);
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error?.message).toBe('Element not found: .missing-element');
+      expect(result.error).toContain('Element not found: .missing-element');
     }
-    expect(CDPService.sendCommand).not.toHaveBeenCalled();
+    expect(mockBrowserService.sendCommand).not.toHaveBeenCalled();
   });
 });

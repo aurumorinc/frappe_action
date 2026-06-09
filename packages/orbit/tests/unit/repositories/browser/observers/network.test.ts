@@ -5,7 +5,7 @@ vi.mock('wxt/browser', () => ({
   browser: fakeBrowser
 }));
 
-import { networkObserver } from '../../../src/utils/network_observer';
+import { networkObserver } from '../../../../../src/repositories/browser/observers/network';
 
 describe('networkObserver', () => {
   beforeEach(() => {

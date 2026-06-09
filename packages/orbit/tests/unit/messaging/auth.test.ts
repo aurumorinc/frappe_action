@@ -10,7 +10,7 @@ describe('auth_flow', () => {
 
   it('should handle ORBIT_START_AUTH and forward to background', async () => {
     // Import the auth listener to register the window message listener
-    const al = await import('../../src/entrypoints/auth_listener');
+    const al = await import('../../../src/messaging/auth');
     al.default.main({} as any);
     
     const sendMessageSpy = vi.spyOn(fakeBrowser.runtime, 'sendMessage').mockResolvedValue({ success: true });

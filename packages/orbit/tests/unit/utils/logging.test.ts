@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { sanitizeUrl, processTelemetry, transmitTelemetry } from '../../../src/utils/logger';
+import { sanitizeUrl, processTelemetry, transmitTelemetry } from '../../../src/utils/logging';
 import { SentryManager } from '../../../src/lib/sentry';
 import { PostHogManager } from '../../../src/lib/posthog';
 
@@ -83,7 +83,7 @@ describe('logger', () => {
       vi.resetModules();
       
       const { browser: mockBrowser } = await import('wxt/browser');
-      const { transmitTelemetry: newTransmitTelemetry } = await import('../../../src/utils/logger');
+      const { transmitTelemetry: newTransmitTelemetry } = await import('../../../src/utils/logging');
       
       // Mock console to avoid cluttering test output
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});

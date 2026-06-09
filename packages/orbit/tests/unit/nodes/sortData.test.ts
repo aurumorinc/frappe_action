@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import sortData from '../../../src/nodes/sortData';
-import { Engine } from '../../../src/services/action';
+import { sortDataNode } from '../../../src/nodes/sortData';
+import { Engine } from '../../../src/nodes/index';
 
 describe('sortData node', () => {
   it('should sort an array of numbers ascending', async () => {
@@ -10,7 +10,7 @@ describe('sortData node', () => {
       }
     } as unknown as Engine;
 
-    const result = await sortData({ dataKey: 'myList', sortBy: '', order: 'asc' }, engine);
+    const result = await sortDataNode.execute({ dataKey: 'myList', sortBy: '', order: 'asc' }, { engine } as any);
     
     expect(result.success).toBe(true);
     expect(engine.scrapedData.myList).toEqual([1, 1, 3, 4, 5, 9]);
@@ -27,7 +27,7 @@ describe('sortData node', () => {
       }
     } as unknown as Engine;
 
-    const result = await sortData({ dataKey: 'users', sortBy: 'age', order: 'desc' }, engine);
+    const result = await sortDataNode.execute({ dataKey: 'users', sortBy: 'age', order: 'desc' }, { engine } as any);
     
     expect(result.success).toBe(true);
     expect(engine.scrapedData.users).toEqual([
@@ -40,15 +40,15 @@ describe('sortData node', () => {
   it('should return an error if dataKey is not an array', async () => {
     const engine = {
       scrapedData: {
-        notAnArray: 'hello'
+        myList: 'not an array'
       }
     } as unknown as Engine;
 
-    const result = await sortData({ dataKey: 'notAnArray', sortBy: '', order: 'asc' }, engine);
+    const result = await sortDataNode.execute({ dataKey: 'myList', sortBy: '', order: 'asc' }, { engine } as any);
     
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.message).toContain('not an array');
+      expect(result.error).toContain('Data at key myList is not an array');
     }
   });
 });

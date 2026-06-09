@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { startAction } from '../../../src/services/extension';
+import { startAction } from '../../../src/messaging/client';
 import { browser } from 'wxt/browser';
 
 vi.mock('wxt/browser', () => ({

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import deleteData from '../../../src/nodes/deleteData';
-import { Engine } from '../../../src/services/action';
+import { deleteDataNode } from '../../../src/nodes/deleteData';
+import { Engine } from '../../../src/nodes/index';
 
 describe('deleteData node', () => {
   it('should delete specified keys from engine scrapedData', async () => {
@@ -12,8 +12,11 @@ describe('deleteData node', () => {
       }
     } as unknown as Engine;
 
-    const result = await deleteData({ deleteList: ['key1', 'key3'] }, engine);
+    const result = await deleteDataNode.execute({ deleteList: ['key1', 'key3'] }, { engine } as any);
     
+    if (!result.success) {
+      console.error(result.error);
+    }
     expect(result.success).toBe(true);
     expect(engine.scrapedData).toEqual({
       key2: 'value2'
@@ -27,7 +30,7 @@ describe('deleteData node', () => {
       }
     } as unknown as Engine;
 
-    const result = await deleteData({ deleteList: ['key2'] }, engine);
+    const result = await deleteDataNode.execute({ deleteList: ['key2'] }, { engine } as any);
     
     expect(result.success).toBe(true);
     expect(engine.scrapedData).toEqual({

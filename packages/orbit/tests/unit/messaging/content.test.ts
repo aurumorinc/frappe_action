@@ -22,7 +22,7 @@ vi.mock('vue', () => ({
   })
 }));
 
-vi.mock('../../../src/entrypoints/ToDo.vue', () => ({
+vi.mock('../../../src/views/ToDoIndex.vue', () => ({
   default: {}
 }));
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import delay from '../../../src/nodes/delay';
+import { delayNode } from '../../../src/nodes/delay';
 
 describe('delay node', () => {
   beforeEach(() => {
@@ -11,7 +11,7 @@ describe('delay node', () => {
   });
 
   it('should resolve after the specified time', async () => {
-    const promise = delay({ time: 1000 });
+    const promise = delayNode.execute({ time: 1000 }, {} as any);
     
     // Fast-forward time
     vi.advanceTimersByTime(1000);
@@ -21,7 +21,7 @@ describe('delay node', () => {
   });
 
   it('should default to 1000ms if time is not provided', async () => {
-    const promise = delay({} as any);
+    const promise = delayNode.execute({} as any, {} as any);
     
     vi.advanceTimersByTime(500);
     // Promise shouldn't be resolved yet, but we can't easily test pending state synchronously
