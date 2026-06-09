@@ -1,5 +1,5 @@
 import { browser } from 'wxt/browser';
-import baseLogger from '../utils/logger';
+import baseLogger from '../utils/logging';
 
 const logger = baseLogger.child({ context: 'extension_service' });
 
