@@ -17,7 +17,7 @@ class TestActionCompiler(UnitTestCase):
                 },
                 {
                     "node_id": "node_2",
-                    "node_type": "get-text",
+                    "node_type": "nodes:get-text",
                     "target_selector": "#title",
                     "extract_target": "innerText",
                     "data_key": "title"
