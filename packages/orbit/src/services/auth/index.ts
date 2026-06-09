@@ -1,14 +1,5 @@
 import { storage } from "#imports";
-
-export interface SiteAuth {
-  id: string;
-  url: string;
-  clientId: string;
-  accessToken: string;
-  refreshToken: string;
-  expiresAt: number;
-  isActive: boolean;
-}
+import { SiteAuth } from "../models/auth";
 
 export const ORBIT_SITES_KEY = "local:orbit_sites";
 
