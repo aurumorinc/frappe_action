@@ -1,13 +1,13 @@
-# Frappe Orbit - Agent Guidelines
+# Frappe Action - Agent Guidelines
 
-This document provides comprehensive guidelines, architectural principles, and context for AI agents working on the Frappe Orbit codebase. **Read this document thoroughly before making any changes.**
+This document provides comprehensive guidelines, architectural principles, and context for AI agents working on the Frappe Action codebase. **Read this document thoroughly before making any changes.**
 
 ## 📁 Project Structure
 
 The repository is a monorepo containing both a Frappe backend application and a WXT-based browser extension.
 
-*   `frappe_orbit/`: The Frappe backend application (Python, MariaDB). Contains DocTypes for Actions, Nodes, Edges, ToDos, and Settings.
-*   `packages/orbit/`: The WXT browser extension (TypeScript, Vue 3, Tailwind CSS). Contains the execution engine, background scripts, content scripts, and UI components.
+*   `frappe_action/`: The Frappe backend application (Python, MariaDB). Contains DocTypes for Actions, Nodes, Edges, ToDos, and Settings.
+*   `packages/action/`: The WXT browser extension (TypeScript, Vue 3, Tailwind CSS). Contains the execution engine, background scripts, content scripts, and UI components.
 *   `specs/`: Technical specifications and blueprints. **Always refer to these documents for architectural decisions.**
 *   `plans/`: Implementation plans and blueprints for specific features.
 *   `third_party/`: Git submodules for external dependencies (e.g., `automa`, `wxt`, `frappe-ui`, `ghost-cursor`, `HumanTyping`, `stagehand`).

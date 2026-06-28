@@ -1,9 +1,9 @@
 [project]
-name = "frappe_orbit"
+name = "frappe_action"
 authors = [
     { name = "Aurumor", email = "hello@aurumor.com"}
 ]
-description = "Frappe Orbit"
+description = "Frappe Action"
 requires-python = ">=3.14"
 readme = "README.md"
 dynamic = ["version"]

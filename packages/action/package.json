@@ -1,0 +1,54 @@
+{
+  "name": "action",
+  "version": "16.0.1",
+  "description": "An intelligent browser co-pilot that seamlessly integrates with your Frappe and ERPNext instances to automate workflows and extract data.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "postinstall": "wxt prepare",
+    "test": "vitest run",
+    "test:e2e": "wxt build && playwright test",
+    "test:e2e:ci": "wxt build && xvfb-run playwright test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@sentry/browser": "^10.56.0",
+    "bezier-js": "^6.1.4",
+    "frappe-ui": "^0.1.278",
+    "lucide-vue-next": "^0.378.0",
+    "pino": "^10.3.1",
+    "posthog-js": "^1.382.0",
+    "sizzle": "^2.3.10",
+    "vue": "^3.4.21",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "^1.2.111",
+    "@playwright/test": "^1.60.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/vue": "^8.0.3",
+    "@types/bezier-js": "^4.1.3",
+    "@types/chrome": "^0.1.42",
+    "@types/node": "^25.9.1",
+    "@types/pino": "^7.0.4",
+    "@types/sizzle": "^2.3.10",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@wxt-dev/auto-icons": "^1.1.1",
+    "@wxt-dev/module-vue": "^1.0.0",
+    "autoprefixer": "^10.4.19",
+    "happy-dom": "^20.9.0",
+    "jsdom": "^29.1.1",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "unplugin-icons": "^23.0.1",
+    "vitest": "^4.1.8",
+    "wxt": "^0.20.26"
+  }
+}
