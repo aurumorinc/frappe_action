@@ -1,6 +1,6 @@
-# Frappe Orbit
+# Frappe Action
 
-Frappe Orbit is an intelligent browser co-pilot and automation system that seamlessly integrates with your Frappe and ERPNext instances. It allows you to define, compile, and execute complex browser-based automation workflows (Actions) directly within the user's browser.
+Frappe Action is an intelligent browser co-pilot and automation system that seamlessly integrates with your Frappe and ERPNext instances. It allows you to define, compile, and execute complex browser-based automation workflows (Actions) directly within the user's browser.
 
 The system consists of two primary components:
 1. **Frappe Backend App**: A Frappe application for defining workflows, managing settings, and providing an LLM gateway for AI-driven interactions.
@@ -21,7 +21,7 @@ This architecture is particularly powerful for tasks requiring interaction with 
 
 ## 🏗️ Architecture Overview
 
-### Frappe Backend (`frappe_orbit/`)
+### Frappe Backend (`frappe_action/`)
 
 The backend is responsible for storing, compiling, and managing the automation logic. It uses standard Frappe DocTypes:
 
@@ -33,7 +33,7 @@ The backend is responsible for storing, compiling, and managing the automation l
 *   **`Model`**: A provider-agnostic configuration for LLMs (leveraging LiteLLM).
 *   **`Action Node Cache`**: A centralized cache that stores deterministic XPath selectors resolved by the LLM for specific natural language instructions and URLs.
 
-### Browser Extension (`packages/orbit/`)
+### Browser Extension (`packages/action/`)
 
 Built using the **WXT** framework (Vue 3 + TypeScript + Vite + Tailwind CSS), the extension is the execution environment for the compiled JSON workflows. It leverages modern web extension APIs (Manifest V3) and is designed to be cross-browser compatible.
 
@@ -55,7 +55,7 @@ The extension integrates Stagehand-inspired concepts to allow workflows to be de
 
 ## 🔐 Authentication Flow
 
-Frappe Orbit uses OAuth 2.0 to securely connect the browser extension to your Frappe site.
+Frappe Action uses OAuth 2.0 to securely connect the browser extension to your Frappe site.
 
 1. **Setup OAuth Client**: Create an OAuth Client in your Frappe site (`Setup > Integrations > OAuth Client`) with the redirect URI `https://<extension-id>.chromiumapp.org/`.
 2. **Configure Orbit Settings**: Go to the `Orbit Settings` page in your Frappe site and enter the Client ID.
@@ -81,7 +81,7 @@ You can install the Frappe app using the [bench](https://github.com/frappe/bench
 ```bash
 cd $PATH_TO_YOUR_BENCH
 bench get-app $URL_OF_THIS_REPO --branch main
-bench install-app frappe_orbit
+bench install-app frappe_action
 ```
 
 ### Frontend (Browser Extension)
@@ -89,7 +89,7 @@ bench install-app frappe_orbit
 To build the browser extension:
 
 ```bash
-cd apps/frappe_orbit/packages/orbit
+cd apps/frappe_action/packages/action
 pnpm install
 pnpm run build
 ```
@@ -105,7 +105,7 @@ pnpm run dev
 The project uses Vitest for unit testing and Playwright for End-to-End (E2E) testing.
 
 ```bash
-cd apps/frappe_orbit/packages/orbit
+cd apps/frappe_action/packages/action
 # Run unit tests
 pnpm run test
 
@@ -118,7 +118,7 @@ pnpm run test:e2e
 This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
 
 ```bash
-cd apps/frappe_orbit
+cd apps/frappe_action
 pre-commit install
 ```
 
