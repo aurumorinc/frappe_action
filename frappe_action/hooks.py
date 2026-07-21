@@ -132,13 +132,20 @@ has_permission = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"ToDo": {
+		"before_insert": "frappe_action.action.doctype.todo.todo.before_insert"
+	}
+}
+
+controller_events = {
+	"Action": [
+		{
+			"method": "frappe_action.action.doctype.action.action.rebalance_action_todos",
+			"rate_limit_per_minute": 50
+		}
+	]
+}
 
 # Scheduled Tasks
 # ---------------
