@@ -11,7 +11,23 @@ class TestOAuthAuthorization(UnitTestCase):
             frappe.delete_doc("OAuth Client", client_id, ignore_permissions=True, force=True)
         
         if hasattr(frappe.local, "flags"):
+            standard_keys = {
+                "currently_saving", "redirect_location", "in_install_db", 
+                "in_install_app", "in_import", "in_test", "mute_messages", 
+                "ignore_links", "mute_emails", "has_dataurl", "new_site", 
+                "read_only", "print_messages", "tests_verbose", "in_render_safe_exec"
+            }
+            keys_to_remove = [k for k in frappe.local.flags if k not in standard_keys]
+            for k in keys_to_remove:
+                del frappe.local.flags[k]
             frappe.local.flags.currently_saving = []
+
+        if hasattr(frappe.local, "request"):
+            frappe.local.request = None
+        if hasattr(frappe.local, "form_dict"):
+            frappe.local.form_dict = frappe._dict()
+        if hasattr(frappe.local, "response"):
+            frappe.local.response = frappe._dict()
 
         frappe.db.rollback()
 
