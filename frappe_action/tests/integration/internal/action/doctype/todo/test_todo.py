@@ -42,8 +42,8 @@ class IntegrationTestToDo(IntegrationTestCase):
 			"action_name": "Test RR Auto Allocate Action",
 			"assignment_rule": "Round Robin",
 			"users": [
-				{"user": "test_user1@example.com"},
-				{"user": "test_user2@example.com"}
+				{"user": "test_user1@example.com", "weight": 1},
+				{"user": "test_user2@example.com", "weight": 1}
 			]
 		}).insert()
 
@@ -64,7 +64,7 @@ class IntegrationTestToDo(IntegrationTestCase):
 			"action_name": "Test RR Draft Action",
 			"assignment_rule": "Round Robin",
 			"users": [
-				{"user": "test_user1@example.com"}
+				{"user": "test_user1@example.com", "weight": 1}
 			]
 		}).insert()
 
