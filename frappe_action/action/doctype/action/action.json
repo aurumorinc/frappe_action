@@ -10,6 +10,9 @@
   "action_name",
   "target_url",
   "model",
+  "assignment_rule",
+  "users",
+  "last_user",
   "nodes",
   "edges",
   "compiled_json"
@@ -33,6 +36,26 @@
    "fieldtype": "Link",
    "label": "Model",
    "options": "Model"
+  },
+  {
+   "default": "Round Robin",
+   "fieldname": "assignment_rule",
+   "fieldtype": "Select",
+   "label": "Assignment Rule",
+   "options": "Round Robin\nLoad Balancing"
+  },
+  {
+   "fieldname": "users",
+   "fieldtype": "Table MultiSelect",
+   "label": "Users",
+   "options": "Assignment Rule User"
+  },
+  {
+   "fieldname": "last_user",
+   "fieldtype": "Link",
+   "label": "Last User",
+   "options": "User",
+   "read_only": 1
   },
   {
    "fieldname": "nodes",
