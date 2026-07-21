@@ -4,7 +4,7 @@
 from unittest.mock import MagicMock, patch
 import frappe
 from frappe.tests import UnitTestCase
-from frappe_action.todo import before_insert
+from frappe_action.action.doctype.todo.todo import before_insert
 
 
 class TestToDoUnit(UnitTestCase):
