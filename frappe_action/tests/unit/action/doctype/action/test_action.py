@@ -1,72 +1,77 @@
-import json
+# Copyright (c) 2026, Aurumor and Contributors
+# See license.txt
+
+from unittest.mock import MagicMock, patch
 import frappe
 from frappe.tests import UnitTestCase
+from frappe_action.action.doctype.action.action import Action
 
-class TestActionCompiler(UnitTestCase):
-    def test_should_compile_linear_nodes_to_vue_flow_json(self):
-        action = frappe.get_doc({
-            "doctype": "Action",
-            "action_name": "Test Linear Action",
-            "nodes": [
-                {
-                    "node_id": "node_1",
-                    "node_type": "trigger",
-                    "target_selector": "",
-                    "extract_target": "",
-                    "data_key": ""
-                },
-                {
-                    "node_id": "node_2",
-                    "node_type": "nodes:get-text",
-                    "target_selector": "#title",
-                    "extract_target": "innerText",
-                    "data_key": "title"
-                }
-            ],
-            "edges": [
-                {
-                    "source_node": "node_1",
-                    "target_node": "node_2",
-                    "condition": ""
-                }
-            ]
-        })
-        
-        action.compile_json()
-        
-        compiled_data = json.loads(action.compiled_json)
-        
-        self.assertEqual(len(compiled_data["nodes"]), 2)
-        self.assertEqual(len(compiled_data["edges"]), 1)
-        
-        self.assertEqual(compiled_data["nodes"][0]["id"], "node_1")
-        self.assertEqual(compiled_data["nodes"][1]["id"], "node_2")
-        self.assertEqual(compiled_data["nodes"][1]["data"]["target_selector"], "#title")
-        
-        self.assertEqual(compiled_data["edges"][0]["source"], "node_1")
-        self.assertEqual(compiled_data["edges"][0]["target"], "node_2")
 
-    def test_should_compile_branching_conditions(self):
-        action = frappe.get_doc({
-            "doctype": "Action",
-            "action_name": "Test Branching Action",
-            "nodes": [
-                {"node_id": "trigger", "node_type": "trigger"},
-                {"node_id": "path_a", "node_type": "hitl"},
-                {"node_id": "path_b", "node_type": "hitl"}
-            ],
-            "edges": [
-                {"source_node": "trigger", "target_node": "path_a", "condition": "amount > 100"},
-                {"source_node": "trigger", "target_node": "path_b", "condition": "amount <= 100"}
-            ]
-        })
-        
-        action.compile_json()
-        
-        compiled_data = json.loads(action.compiled_json)
-        
-        self.assertEqual(len(compiled_data["nodes"]), 3)
-        self.assertEqual(len(compiled_data["edges"]), 2)
-        
-        self.assertEqual(compiled_data["edges"][0]["data"]["condition"], "amount > 100")
-        self.assertEqual(compiled_data["edges"][1]["data"]["condition"], "amount <= 100")
+class TestActionUnit(UnitTestCase):
+	def setUp(self) -> None:
+		super().setUp()
+
+	def test_round_robin_allocation(self) -> None:
+		# Arrange: Instantiate the specific Action controller directly to bypass global DocType naming conflicts
+		action = Action({
+			"doctype": "Action",
+			"action_name": "Test RR Action",
+			"assignment_rule": "Round Robin",
+			"users": [
+				{"user": "user1@example.com"},
+				{"user": "user2@example.com"},
+				{"user": "user3@example.com"}
+			]
+		})
+		# Mock db_set to prevent actual DB writes during unit tests
+		action.db_set = MagicMock()
+
+		# Act & Assert
+		# 1st time (no last_user) -> user1
+		action.last_user = None
+		self.assertEqual(action.determine_assignee(), "user1@example.com")
+		action.db_set.assert_called_with("last_user", "user1@example.com")
+
+		# 2nd time (last_user = user1) -> user2
+		action.last_user = "user1@example.com"
+		self.assertEqual(action.determine_assignee(), "user2@example.com")
+		action.db_set.assert_called_with("last_user", "user2@example.com")
+
+		# 3rd time (last_user = user2) -> user3
+		action.last_user = "user2@example.com"
+		self.assertEqual(action.determine_assignee(), "user3@example.com")
+		action.db_set.assert_called_with("last_user", "user3@example.com")
+
+		# 4th time (last_user = user3) -> user1 (loops)
+		action.last_user = "user3@example.com"
+		self.assertEqual(action.determine_assignee(), "user1@example.com")
+		action.db_set.assert_called_with("last_user", "user1@example.com")
+
+	def test_load_balancing_allocation(self) -> None:
+		# Arrange: Instantiate the specific Action controller directly to bypass global DocType naming conflicts
+		action = Action({
+			"doctype": "Action",
+			"action_name": "Test LB Action",
+			"assignment_rule": "Load Balancing",
+			"users": [
+				{"user": "user1@example.com"},
+				{"user": "user2@example.com"}
+			]
+		})
+
+		# Patch locally after instantiation to prevent interfering with standard framework loads
+		with patch("frappe.db.sql") as mock_sql:
+			# Mock SQL response: user1 has 5, user2 has 2
+			mock_sql.return_value = [
+				{"allocated_to": "user1@example.com", "cnt": 5},
+				{"allocated_to": "user2@example.com", "cnt": 2}
+			]
+
+			# Act
+			assignee = action.determine_assignee()
+
+			# Assert
+			self.assertEqual(assignee, "user2@example.com")
+			# Verify correct SQL filters
+			sql_call_args = mock_sql.call_args[0][0]
+			self.assertIn("SELECT allocated_to, COUNT(name) as cnt", sql_call_args)
