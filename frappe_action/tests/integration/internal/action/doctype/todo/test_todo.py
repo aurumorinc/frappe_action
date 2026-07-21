@@ -11,6 +11,8 @@ class IntegrationTestToDo(IntegrationTestCase):
 	"""
 	@classmethod
 	def setUpClass(cls) -> None:
+		if hasattr(frappe.local, "flags"):
+			frappe.local.flags.currently_saving = []
 		super().setUpClass()
 		# Create test users if they don't exist
 		for email in ["test_user1@example.com", "test_user2@example.com"]:
